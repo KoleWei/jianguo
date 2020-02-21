@@ -1,7 +1,7 @@
 <?php
 
 return array (
-  'name' => 'FastAdmin',
+  'name' => '坚果摄影',
   'beian' => '',
   'cdnurl' => '',
   'version' => '1.0.1',
@@ -22,11 +22,10 @@ return array (
   ),
   'configgroup' => 
   array (
+    'wxapp' => '小程序配置',
     'basic' => 'Basic',
     'email' => 'Email',
     'dictionary' => 'Dictionary',
-    'user' => 'User',
-    'example' => 'Example',
   ),
   'mail_type' => '1',
   'mail_smtp_host' => 'smtp.qq.com',
@@ -35,4 +34,5 @@ return array (
   'mail_smtp_pass' => 'password',
   'mail_verify_type' => '2',
   'mail_from' => '10000@qq.com',
+  'wx_name' => '坚果摄影',
 );
