@@ -35,4 +35,6 @@ return array (
   'mail_verify_type' => '2',
   'mail_from' => '10000@qq.com',
   'wx_name' => '坚果摄影',
+  'fontfamily' => '/uploads/20200222/071c5637d1d3d870af3f50de0c72bf24.ttf',
+  'wx_share_bg' => '/uploads/20200222/1937d837fe5bdfd1a26f31dbfcefa620.jpg',
 );

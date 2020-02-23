@@ -3,10 +3,12 @@
 namespace app\wxapi\controller;
 
 use app\common\controller\Api;
+use PDO;
 use think\Config;
 use think\Loader;
 use think\Session;
 
+Loader::import('controller/Jump', TRAIT_PATH, EXT);
 
 /**
  * 首页接口
@@ -32,7 +34,7 @@ class Configs extends Api
         $lang = strip_tags($this->request->langset());
 
         $config = [
-            'updatetime'     => time() * 1000,
+            'updatetime'     => (time() + 24 * 60 * 60) * 1000,
             'site'           => $site,
             'upload'         => $upload,
             'modulename'     => $modulename,
@@ -43,5 +45,17 @@ class Configs extends Api
             'referer'        => Session::get("referer")
         ];
         $this->success('读取配置', $config);
+    }
+
+    /**
+     * 读取配置资源
+     *
+     * @param [type] $key
+     * @return void
+     */
+    public function getconfigassert($key) {
+        $site = Config::get("site");
+        $assert = $site[$key];
+        header("Location: " . $this->request->baseUrl . $assert);
     }
 }

@@ -2,5 +2,5 @@
 
 //配置文件
 return [
-    'exception_handle'        => '\\app\\wxapi\\library\\ExceptionHandle',
+    // 'exception_handle'        => '\\app\\wxapi\\library\\ExceptionHandle',
 ];

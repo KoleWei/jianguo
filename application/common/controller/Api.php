@@ -64,6 +64,12 @@ class Api
     protected $responseType = 'json';
 
     /**
+     * 请求参数
+     * @var array
+     */
+    protected $pdata = [];
+
+    /**
      * 构造方法
      * @access public
      * @param Request $request Request 对象
@@ -156,6 +162,9 @@ class Api
 
         // 加载当前控制器语言包
         $this->loadlang($controllername);
+
+        // 设置参数
+        $this->pdata = $this->request->param();
     }
 
     /**
