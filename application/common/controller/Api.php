@@ -3,6 +3,7 @@
 namespace app\common\controller;
 
 use app\common\library\Auth;
+use app\common\server\CustServer;
 use think\Config;
 use think\exception\HttpResponseException;
 use think\exception\ValidateException;
@@ -70,6 +71,20 @@ class Api
     protected $pdata = [];
 
     /**
+     * 登录用户
+     *
+     * @var [type]
+     */
+    protected $cust = null;
+
+    public function getCust() {
+        return $this->cust;
+    }
+    public function getAccess() {
+        return $this->getCust()['accessauth'];
+    }
+
+    /**
      * 构造方法
      * @access public
      * @param Request $request Request 对象
@@ -133,19 +148,17 @@ class Api
         $this->auth->setRequestUri($path);
         // 检测是否需要验证登录
         if (!$this->auth->match($this->noNeedLogin)) {
-            //初始化
-            $this->auth->init($token);
             //检测是否登录
-            if (!$this->auth->isLogin()) {
-                $this->error(__('Please login first'), null, 401);
+            if (!$this->haslogin()) {
+                $this->error(__('Please login first'), null, 1004);
             }
             // 判断是否需要验证权限
-            if (!$this->auth->match($this->noNeedRight)) {
-                // 判断控制器和方法判断是否有对应权限
-                if (!$this->auth->check($path)) {
-                    $this->error(__('You have no permission'), null, 403);
-                }
-            }
+            // if (!$this->auth->match($this->noNeedRight)) {
+            //     // 判断控制器和方法判断是否有对应权限
+            //     if (!$this->auth->check($path)) {
+            //         $this->error(__('You have no permission'), null, 403);
+            //     }
+            // }
         } else {
             // 如果有传递token才验证是否登录状态
             if ($token) {
@@ -165,6 +178,25 @@ class Api
 
         // 设置参数
         $this->pdata = $this->request->param();
+    }
+
+    public function haslogin () {
+        $accessauth = $this->request->param('accessauth');
+        if (empty($accessauth)) {
+            return false;
+        }
+
+        $user = CustServer::getCust($accessauth);
+        if (empty($user)) {
+            return false;
+        }
+
+        if ($user['failuretime'] < time()) {
+            return false;
+        }
+
+        $this->cust = $user;
+        return $user;
     }
 
     /**

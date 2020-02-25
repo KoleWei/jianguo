@@ -4,6 +4,7 @@ namespace app\wxapi\controller;
 
 use app\common\controller\Api;
 use app\common\model\Styles;
+use app\common\server\CustServer;
 use app\wxapi\library\Utils;
 use app\wxapi\library\Wx;
 use think\Config;
@@ -23,24 +24,15 @@ class Auth extends Api
     {
         $user = Wx::login($code, $iv, $encryptedData);
 
-        $custmodel = (new Cust());
-        $cust = $custmodel->where('openid', $user['openId'])->find();
-
-        $custobj = [
-            'openid' => $user['openId'],
-            'unionid' => $user['unionId'],
-            'nickname' => Utils::removeEmoji($user['nickName']),
-            'avatar_url' => $user['avatarUrl'],
-        ];
-
-        if (empty($cust)) {
-            $custmodel->save($custobj);
-            $cust = $custmodel->where('openid', $user['openId'])->find();
-        } else {
-            $cust->save($custobj);
-        }
-        session('user', $cust);
-        $cust['session_token'] = session_id();
+        $cust = CustServer::login($user);
         $this->success('登录成功', $cust);
+    }
+
+    public function getuser() {
+        $user = CustServer::getUser($this->getAccess());
+        if (empty($user)) {
+            $this->error('获取用户信息为空');
+        }
+        $this->success('成功获取用户信息', $user);
     }
 }
