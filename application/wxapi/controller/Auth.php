@@ -3,6 +3,7 @@
 namespace app\wxapi\controller;
 
 use app\common\controller\Api;
+use app\common\model\Cust;
 use app\common\model\Styles;
 use app\common\server\CustServer;
 use app\wxapi\library\Utils;
@@ -28,11 +29,45 @@ class Auth extends Api
         $this->success('登录成功', $cust);
     }
 
+    // 获取用户
     public function getuser() {
         $user = CustServer::getUser($this->getAccess());
         if (empty($user)) {
             $this->error('获取用户信息为空');
         }
         $this->success('成功获取用户信息', $user);
+    }
+
+    // 设置用户
+    public function setuser(){
+        $param = $this->request->param();
+        $cust = (new Cust())
+            ->where('id', $this->getCustId())
+            ->find();
+
+        $data = [];
+        if (!empty($param['is_tg'])) {
+            $data['is_tg'] = ($param['is_tg'] == 'y' ? 'y' : 'n');
+        }
+
+        if (!empty($param['uname'])) {
+            $data['uname'] = $param['uname'];
+        }
+
+        if (!empty($param['phone'])) {
+            $data['phone'] = $param['phone'];
+        }
+
+        if (!empty($param['logoimage'])) {
+            $data['logoimage'] = $param['logoimage'];
+        }
+
+        if (!empty($param['wximg'])) {
+            $data['wximg'] = $param['wximg'];
+        }
+
+        $cust->save($data);
+
+        $this->success('设置用户成功');
     }
 }

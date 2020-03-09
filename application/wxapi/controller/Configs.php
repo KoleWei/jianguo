@@ -58,4 +58,6 @@ class Configs extends Api
         $assert = $site[$key];
         header("Location: " . $this->request->baseUrl . $assert);
     }
+
+    
 }

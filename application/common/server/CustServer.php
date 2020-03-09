@@ -47,6 +47,8 @@ class CustServer
             "phone" => $cust['phone'],
             "uname" => $cust['uname'],
             "wximg" => $cust['wximg'],
+            "wximg" => $cust['wximg'],
+            "nickname" => $cust['nickname'],
             "logoimage" => $cust['logoimage'],
         ];
     }

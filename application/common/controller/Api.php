@@ -80,8 +80,16 @@ class Api
     public function getCust() {
         return $this->cust;
     }
+    public function getCustId() {
+        return $this->cust['id'];
+    }
     public function getAccess() {
         return $this->getCust()['accessauth'];
+    }
+
+    // 设置现在模版
+    public function limitfmt($page = 1, $size = 20){
+        return ($page - 1) * $size . ',' . $size;
     }
 
     /**

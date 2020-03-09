@@ -3,12 +3,13 @@
 namespace app\common\model;
 
 use think\Model;
+use traits\model\SoftDelete;
 
 
 class Zp extends Model
 {
 
-    
+    use SoftDelete;
 
     
 
@@ -21,7 +22,7 @@ class Zp extends Model
     // 定义时间戳字段名
     protected $createTime = 'createtime';
     protected $updateTime = false;
-    protected $deleteTime = false;
+    protected $deleteTime = 'deletetime';
 
     // 追加属性
     protected $append = [
@@ -83,5 +84,10 @@ class Zp extends Model
     public function styles()
     {
         return $this->belongsTo('Styles', 'style', 'id', [], 'LEFT')->setEagerlyType(0);
+    }
+
+    public function stylescust()
+    {
+        return $this->belongsTo('StylesCust', 'style', 'style', [], 'LEFT')->setEagerlyType(0);
     }
 }
