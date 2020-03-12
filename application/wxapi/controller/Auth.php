@@ -8,6 +8,8 @@ use app\common\model\Styles;
 use app\common\server\CustServer;
 use app\wxapi\library\Utils;
 use app\wxapi\library\Wx;
+use Overtrue\Pinyin\Pinyin;
+
 use think\Config;
 
 /**
@@ -69,5 +71,55 @@ class Auth extends Api
         $cust->save($data);
 
         $this->success('设置用户成功');
+    }
+
+    /**
+     * 获得用户
+     */
+    public function custlist() {
+        $param = $this->request->param();
+
+        $custModle = (new Cust());
+
+        if (!empty($param['role'])) {
+            switch($param['role']) {
+                case 'photoer':
+                    $custModle->where('is_photoer', 'y');
+                break;
+                case 'teacher':
+                    $custModle->where('is_teacher', 'y');
+                break;
+                case 'agent':
+                    $custModle->where('is_agent', 'y');
+                break;
+            }
+        }
+
+        if (!empty($param['search'])) {
+            $custModle->where("(uname != '' and uname like '%". $param['search'] ."%') or (uname = '' and  nickname like '%". $param['search'] ."%')");
+        }
+        
+        $list = $custModle->select();
+        foreach ($list as $row) {
+            $row->visible(['id','nickname','uname', 'phone', 'logoimage', 'wximg', 'avatarimage']);
+        }
+        $list = collection($list)->toArray();
+
+        $maplist = [];
+        $pinyin = (new Pinyin());
+        foreach ($list as $row) {
+            $zm = strtoupper($pinyin->abbr(empty($row['uname']) ? $row['nickname'] : $row['uname'])[0]);
+            if (preg_match('/[A-Z]/', $zm)) {
+                if(empty($maplist[$zm])) $maplist[$zm] = [];
+                $maplist[$zm][] = $row;
+            } else {
+                if(empty($maplist['#'])) $maplist['#'] = [];
+                $maplist['#'][] = $row;
+            }
+        }
+
+        $this->success("用户列表", [
+            "list" => $maplist
+        ]);
     }
 }

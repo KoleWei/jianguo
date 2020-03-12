@@ -3,12 +3,15 @@
 namespace app\wxapi\controller;
 
 use app\common\controller\Api;
+use app\common\model\StarUp;
 use app\common\model\Styles;
 use app\common\model\StylesCust;
 use app\common\model\Zp;
 use Exception;
 use think\Config;
 use think\Db;
+
+use function PHPSTORM_META\map;
 
 /**
  * 摄影师
@@ -61,6 +64,7 @@ class Photoer extends Api
 
             Db::commit();
         } catch (Exception $e) {
+            Db::rollback();
             $this->error($e->getMessage());
         }
 
@@ -146,15 +150,44 @@ class Photoer extends Api
      */
     public function starup($styleid) {
         $stylecust = (new StylesCust())
-            ->where('styles_cust.cust', $this->getCustId())
-            ->where('styles_cust.style', $styleid)
+            ->where('cust', $this->getCustId())
+            ->where('style', $styleid)
             ->find();
 
         if (empty($stylecust)) {
-            return $this->error('当前类目没有作品，无法提升星级');
+            return $this->error('当前类目没有作品，无法提升星级!');
         }
 
+        if ($stylecust['star'] >= 5) {
+            return $this->error('已经到达最高星级!');  
+        }
+
+        Db::startTrans();
+        try {
+            $starlogcount = (new StarUp())
+                ->where('cust', $this->getCustId())
+                ->where('style', $styleid)
+                ->where('step', 1)
+                ->count();
+            if ($starlogcount > 0) {
+                return $this->error('该类目星级在审核中!');
+            }
+
+            (new StarUp())->save([
+                "cust" => $this->getCustId(),
+                "style" => $styleid,
+                "stylecust" => $stylecust['id'],
+                "needstar" => $stylecust['star'] + 1,
+                "step" => 1,
+                "createtime" => time(),
+            ]);
+        } catch(Exception $e) {
+            Db::rollback();
+            $this->error($e->getMessage());
+        }
+
+        Db::commit();
         
-        return $this->success('提升星级申请创建成功');
+        return $this->success('提升星级申请成功，等待审核');
     }
 }
