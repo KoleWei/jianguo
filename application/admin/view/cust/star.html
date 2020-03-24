@@ -1,0 +1,16 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    {foreach $styles as $key=>$vo } 
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">{$vo.styles.name}</label>
+            <div class="col-xs-8 col-sm-5">
+                <input  class="form-control" disabled readonly value="{$vo.star}星">
+            </div>
+            <view class="col-xs-4 col-sm-3">
+                <a  href="/admin/cust/setstar/ids/{$vo.id}?dialog=1" class="btn btn-primary btn-refresh">修改</a>
+            </view> 
+        </div>
+    {/foreach}
+    
+
+</form>

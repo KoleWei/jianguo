@@ -213,7 +213,7 @@ class Api
      */
     protected function loadlang($name)
     {
-        Lang::load(APP_PATH . $this->request->module() . '/lang/' . $this->request->langset() . '/' . str_replace('.', '/', $name) . '.php');
+        Lang::load(APP_PATH . 'admin' . '/lang/' . $this->request->langset() . '/' . str_replace('.', '/', $name) . '.php');
     }
 
     /**

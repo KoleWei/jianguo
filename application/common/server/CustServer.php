@@ -38,6 +38,29 @@ class CustServer
             return null;
         }
         return [
+            "id" => $cust['id'],
+            "accessauth" => $cust['accessauth'],
+            "failuretime" => $cust['failuretime'],
+            "is_agent" => $cust['is_agent'],
+            "is_photoer" => $cust['is_photoer'],
+            "is_teacher" => $cust['is_teacher'],
+            "is_tg" => $cust['is_tg'],
+            "phone" => $cust['phone'],
+            "uname" => $cust['uname'],
+            "wximg" => $cust['wximg'],
+            "wximg" => $cust['wximg'],
+            "nickname" => $cust['nickname'],
+            "logoimage" => $cust['logoimage'],
+        ];
+    }
+
+    public static function getOtherUser($id) {
+        $cust = (new Cust())->where('id', $id)->find();
+        if (empty($cust)) {
+            return null;
+        }
+        return [
+            "id" => $cust['id'],
             "accessauth" => $cust['accessauth'],
             "failuretime" => $cust['failuretime'],
             "is_agent" => $cust['is_agent'],

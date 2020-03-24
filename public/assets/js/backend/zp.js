@@ -6,7 +6,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Table.api.init({
                 extend: {
                     index_url: 'zp/index' + location.search,
-                    add_url: 'zp/add',
                     edit_url: 'zp/edit',
                     del_url: 'zp/del',
                     multi_url: 'zp/multi',
@@ -23,17 +22,49 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 sortName: 'id',
                 columns: [
                     [
-                        {checkbox: true},
-                        {field: 'data', title: __('Data')},
-                        {field: 'covorimage', title: __('Covorimage'), events: Table.api.events.image, formatter: Table.api.formatter.image},
+                        {field: 'id', title: __('Id'), operate:false},
+                        {field: 'cust.nickname', title: __('摄影师昵称'), operate:'like', visible: false},
+                        {
+                            field: 'cust.uname', 
+                            title: __('摄影师名称'), 
+                            operate:false,
+                            formatter: function(val, row, index) {
+                                return row['cust']['uname'] || row['cust']['nickname'];
+                            }
+                        },
+
+                        {field: 'styles.name', title: __('Styles.name'), operate: 'like'},
+
+                       
+
+                        {field: 'covorimage', title: __('Covorimage'), operate: false, events: Table.api.events.image, formatter: Table.api.formatter.image},
+
+
+                       
+
+
+                        {
+                            field: 'data', 
+                            title: __('Data'), 
+                            operate: false,
+                            formatter: function(val, row, index) {
+                                switch(row['type']) {
+                                    case 'zp':
+                                        return '<a target="_brank;" href="' + row['data'] + '"><img class="img-lg img-center" src="' + row['data'] + '"/></a>'
+                                    case 'tx':
+                                        return '<a target="_brank;" href="https://v.qq.com/x/page/' + row['data'] + '.html">点击查看视频</a>'
+                                    default:
+                                        break;
+                                }
+                            }
+                        },
+
+
                         {field: 'type', title: __('Type'), searchList: {"zp":__('Type zp'),"sp":__('Type sp'),"tx":__('Type tx')}, formatter: Table.api.formatter.normal},
                         {field: 'is_top', title: __('Is_top'), searchList: {"1":__('Is_top 1'),"2":__('Is_top 2')}, formatter: Table.api.formatter.normal},
                         {field: 'check', title: __('Check'), searchList: {"y":__('Check y'),"n":__('Check n'),"t":__('Check t')}, formatter: Table.api.formatter.normal},
-                        {field: 'read_num', title: __('Read_num')},
+                        {field: 'read_num', title: __('Read_num'), operate:'RANGE'},
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', formatter: Table.api.formatter.datetime},
-                        {field: 'cust.nickname', title: __('Cust.nickname')},
-                        {field: 'cust.uname', title: __('Cust.uname')},
-                        {field: 'styles.name', title: __('Styles.name')},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
                 ]

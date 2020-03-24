@@ -3,6 +3,11 @@
 namespace app\admin\controller;
 
 use app\common\controller\Backend;
+use app\common\model\Notify;
+use app\common\model\StylesCust;
+use app\common\server\NotifyServer;
+use Exception;
+use think\Db;
 
 /**
  * 用户
@@ -74,6 +79,85 @@ class Cust extends Backend
 
             return json($result);
         }
+        return $this->view->fetch();
+    }
+
+    public function setstar($ids) {
+
+        $sc = (new StylesCust())->where('id', $ids)->find();
+
+        if ($this->request->isAjax()){
+
+            Db::startTrans();
+            try {
+                $sc->save([
+                    'star' => $this->request->param('star')
+                ]);
+            }catch(Exception $e) {
+                Db::rollback();
+                $this->error($e->getMessage());
+            }
+    
+            Db::commit();
+            return $this->success('设置成功');
+        }
+
+        $this->assign('sc', $sc);
+        return $this->view->fetch();
+        
+    }
+
+    /**
+     * 查看星级
+     *
+     * @return void
+     */
+    public function star($ids) {
+        $cust = (new \app\common\model\Cust())->where('id',$ids)->find();
+        if (empty($cust)) {
+            $this->error('用户不存在');
+        }
+
+        $styles = (new StylesCust())
+            ->with(['styles'])
+            ->where('styles.deletetime is null')
+            ->where('styles_cust.cust', $ids)
+            ->select();
+
+        $this->assign('styles', $styles);
+        return $this->view->fetch();
+    }
+
+
+    public function notify($ids) {
+       
+        if ($this->request->isAjax()){
+
+            Db::startTrans();
+            try {
+                $is = explode(',', $ids);
+
+                if (count($is) == 0) {
+                    $this->error('未选择用户');
+                }
+                foreach($is as $i) {
+                    NotifyServer::notify($i, 'mg', [
+                        "type" => 3,
+                        "role" => 'all',
+                        "desc" => $this->request->param('desc'),
+                        "content" => $this->request->param('notify'),
+                    ]);
+                }
+
+            }catch(Exception $e) {
+                Db::rollback();
+                $this->error($e->getMessage());
+            }
+    
+            Db::commit();
+            return $this->success('设置成功');
+        }
+
         return $this->view->fetch();
     }
 }

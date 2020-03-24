@@ -24,6 +24,18 @@ class Teacher extends Api
     protected $noNeedLogin = [];
     protected $noNeedRight = ['*'];
 
+    public function _initialize()
+    {
+        parent::_initialize();
+        $cust = (new Cust)
+            ->where('id', $this->getCustId())
+            ->find();
+
+        if ($cust['is_teacher'] == 'n') {
+            $this->error('当前用户非老师');
+        }
+    }
+
     /**
      * 星级审核列表
      */
@@ -117,7 +129,7 @@ class Teacher extends Api
             
         }catch(Exception $e) {
             Db::rollback();
-            $this->error($e->getMessage());
+            throw $e;
         }
 
         Db::commit();
@@ -164,7 +176,7 @@ class Teacher extends Api
             ZpServer::check($id, $status, $this->getCustId(),$msg);
         }catch(Exception $e) {
             Db::rollback();
-            $this->error($e->getMessage());
+            throw $e;
         }
 
         Db::commit();

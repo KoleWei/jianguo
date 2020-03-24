@@ -3,6 +3,7 @@
 namespace app\wxapi\library;
 
 use EasyWeChat\Foundation\Application;
+use EasyWeChat\Kernel\Http\StreamResponse;
 
 /**
  * 自定义API模块的错误显示
@@ -33,5 +34,38 @@ class Wx
         $sessionkey = $miniProgram->sns->getSessionKey($code);
         $openid = $sessionkey['openid'];
         return $miniProgram->encryptor->decryptData($sessionkey['session_key'], $iv, $encryptData);
+    }
+
+    public static function qrcode($key,$path, $width) {
+
+        $options = [
+            // ...
+            'mini_program' => [
+                'app_id'   => self::$miniapp['app_id'],
+                'secret'   => self::$miniapp['secret'],
+                'token'    => 'component-token',
+                'aes_key'  => 'component-aes-key'
+            ],
+            // ...
+        ];
+
+        $app = new Application($options);
+        $miniProgram = $app->mini_program;
+        $response = $miniProgram->qrcode->getAppCode($path, $width);
+
+        $savePath = '/uploads/qr/wxuser';
+        $downloadpath = ROOT_PATH . 'public' . $savePath;
+        if (!is_dir($downloadpath)){  
+            mkdir(iconv("UTF-8", "GBK", $downloadpath),0777,true); 
+        }
+
+        $dbpath = $savePath . '/'. $key .'.jpg';
+
+        $pathimg =  $downloadpath . '/'. $key .'.jpg';
+        $file = fopen($pathimg, "w");//打开文件准备写入
+        fwrite($file,$response);//写入
+        fclose($file);//关闭
+
+        return $dbpath;
     }
 }

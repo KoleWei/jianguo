@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'Id'            => 'id',
+    'Orderno'       => '订单号',
+    'Uname'         => '客户名字',
+    'Uphone'        => '客户联系方式',
+    'Udemand'       => '客户需求',
+    'Shoottime'     => '拍摄时间',
+    'Endtime'       => '预计完成时间',
+    'Type'          => '订单类型',
+    'Type sp'       => '试拍单',
+    'Type ps'       => '拍摄单',
+    'Ordermoney'    => '订单总价',
+    'Cbmoney'       => '拍摄成本',
+    'Sysmoney'      => '摄影师价格',
+    'Status'        => '订单状态',
+    'Status 1'      => '创建订单',
+    'Status 2'      => '订单洽谈',
+    'Status 3'      => '订单进行中',
+    'Status 4'      => '订单结束',
+    'Status 5'      => '订单失效',
+    'Cbimage'       => '成本图片',
+    'Dgimage'       => '定金图片',
+    'Wkimage'       => '尾款图片',
+    'Sxmsg'         => '失效原因',
+    'Agent'         => '经纪人',
+    'Photoer'       => '摄影师',
+    'Allow'         => '允许接单',
+    'Createtime'    => '创建时间',
+    'Cust.nickname' => '昵称',
+    'Cust.uname'    => '姓名'
+];

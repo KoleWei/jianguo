@@ -60,12 +60,12 @@ class Zp extends Backend
             $list = $this->model
                     ->with(['cust','styles'])
                     ->where($where)
-                    ->order($sort, $order)
+                    ->order('is_top asc, createtime desc ')
                     ->limit($offset, $limit)
                     ->select();
 
             foreach ($list as $row) {
-                $row->visible(['data','covorimage','type','is_top','check','read_num','createtime']);
+                $row->visible(['id', 'data','covorimage','type','is_top','check','read_num','createtime']);
                 $row->visible(['cust']);
 				$row->getRelation('cust')->visible(['nickname','uname']);
 				$row->visible(['styles']);

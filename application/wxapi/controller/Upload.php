@@ -220,7 +220,7 @@ class Upload extends Api
             if (in_array($suffix, ['png', 'jpg', 'jpeg'])) {
                 // 上传缩略图
                 $thumbnailsimage = \think\Image::open($splInfo);
-                $thumbnailsimage->thumb(300, 300,\think\Image::THUMB_SCALING)->save(ROOT_PATH . '/public' . $uploadDir . $thumbnailsfileName);
+                $thumbnailsimage->thumb(300, 300,\think\Image::THUMB_CENTER)->save(ROOT_PATH . '/public' . $uploadDir . $thumbnailsfileName);
                 
                 $thumbnailsSavePate = $thumbnailsuploadDir . $thumbnailsfileName;
             }

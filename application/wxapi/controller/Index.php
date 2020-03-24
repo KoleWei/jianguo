@@ -8,6 +8,8 @@ use app\common\model\Styles;
 use app\common\model\StylesCust;
 use app\common\model\Yuyue;
 use app\common\model\Zp;
+use app\common\server\OrderServer;
+use app\wxapi\library\Wx;
 use think\Config;
 
 /**
@@ -17,6 +19,7 @@ class Index extends Api
 {
     protected $noNeedLogin = ['*'];
     protected $noNeedRight = ['*'];
+
 
     /**
      * 首页
@@ -107,9 +110,10 @@ class Index extends Api
         }
 
         if (empty($phone)){
-            $phonelist = (new Cust())->where("phone != ''")->where('is_agent', 'y')->column('phone');
+            $f = (new Cust());
+            $phonelist = $f->where("phone != ''")->where('is_agent', 'y')->field('phone')->select();
             if (!empty($phonelist)){
-                $phone = array_rand($phonelist, 1);
+                $phone = $phonelist[array_rand($phonelist, 1)]['phone'];
             }
         }
 
@@ -148,6 +152,11 @@ class Index extends Api
         // 类目
         if (!empty($param['style'])) {
             $zpmodel->where('zp.style', $param['style']);
+        }
+
+        // 摄影师
+        if (!empty($param['cust'])) {
+            $zpmodel->where('zp.cust', $param['cust']);
         }
 
         // 搜索
@@ -232,6 +241,7 @@ class Index extends Api
     {
         $params = $this->request->param();
         $access = false;
+        $accessmsg = '';
 
         $zpmodel = (new Zp())
             ->with(['styles', 'cust'])
@@ -240,6 +250,18 @@ class Index extends Api
         $detail = $zpmodel->find();
 
         if (!empty($detail)) {
+            if ($detail['check'] == 'n') {
+                $accessmsg = '作品审核被拒绝';
+            } else
+
+                if ($detail['check'] == 't') {
+                    $accessmsg = '作品正在审核中';
+                } else
+
+                    if ($detail['check'] == 'y') {
+                        $access = true;
+                    }
+
             if ($detail['cust']['id'] == $this->getCustId()) {
                 $access = true;
             }
@@ -249,10 +271,18 @@ class Index extends Api
             $detail->getRelation('styles')->visible(['defimage', 'name', 'showimage', 'type']);
             $detail->visible(['cust']);
             $detail->getRelation('cust')->visible(['nickname','uname', 'phone', 'logoimage', 'wximg', 'avatarimage', 'is_tg', 'id']);
+        } else {
+            $access = false;
+            $accessmsg = '作品不存在';
+        }
+
+        if ($access) {
+            (new Zp())->where('id', $id)->setInc('read_num');
         }
 
         $this->success('读取作品', [
             "product"=> $detail,
+            "accessmsg" => $accessmsg,
             "access" => $access
         ]);
     }
@@ -269,5 +299,80 @@ class Index extends Api
         // 搜索分类
 
 
+    }
+
+    /**
+     * 分享图片
+     */
+    public function shareimg($id) {
+
+        $config = Config::get('site');
+
+        $zp = (new Zp())
+            ->where('id', $id)
+            ->find();
+
+        if (empty($zp)) {
+            return $this->error('作品不存在', null, 404);
+        }
+
+        if (!empty($zp['fximage'])){
+            //header("Location: " . $this->request->baseUrl . $zp['fximage']);
+        }
+
+        $qrimg = $zp['qrimage'];
+        // $qrimg = "";
+        if (empty($qrimg) || is_file(ROOT_PATH . 'public' . $qrimg)) {
+            $qrimg = Wx::qrcode($id,'pages/product/detail?id=' . $id, $config['miniqrwidth']);
+            $zp->save([
+                'qrimage' => $qrimg
+            ]);
+        }
+
+        $image = \think\Image::open(ROOT_PATH . 'public' . $config['wx_share_bg']);
+
+        $savePath = '/uploads/qr/share';
+        $downloadpath = ROOT_PATH . 'public' . $savePath;
+        if (!is_dir($downloadpath)){  
+            mkdir(iconv("UTF-8", "GBK", $downloadpath),0777,true); 
+        }
+
+        $dbpath = $savePath . '/'. $id .'.jpg';
+
+        $pathimg =  $downloadpath . '/'. $id .'.jpg';
+
+
+        $image = $image->water(ROOT_PATH . 'public' . $qrimg,[
+            $config['miniqrleft'], $config['miniqrtop']
+        ] ,100);
+
+        if (!empty($zp['covorimage'])) {
+
+            $covorimagePath = ROOT_PATH . 'public' . $zp['covorimage'];
+            $covorimagePath = str_replace('_sm', '',$covorimagePath);
+
+            $covorimage = \think\Image::open($covorimagePath);
+            // 剪切图片
+
+            if (!empty($covorimage)) {
+
+                $covorimage->thumb(900, 600,\think\Image::THUMB_CENTER)->save($downloadpath . '/t_'. $id .'.jpg');
+
+                $image = $image->water($downloadpath . '/t_'. $id .'.jpg',[
+                    ($image->width()-900)/2, 300
+                ] ,100);
+            }
+           
+        }
+
+        $image->save($pathimg); 
+
+
+
+        $zp->save([
+            'fximage' => $dbpath,
+        ]);
+
+        header("Location: " . $this->request->baseUrl . $dbpath);
     }
 }

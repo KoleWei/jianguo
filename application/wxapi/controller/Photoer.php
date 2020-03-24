@@ -3,10 +3,14 @@
 namespace app\wxapi\controller;
 
 use app\common\controller\Api;
+use app\common\model\Cust;
+use app\common\model\Order;
+use app\common\model\OrderTake;
 use app\common\model\StarUp;
 use app\common\model\Styles;
 use app\common\model\StylesCust;
 use app\common\model\Zp;
+use app\common\server\OrderServer;
 use Exception;
 use think\Config;
 use think\Db;
@@ -21,12 +25,33 @@ class Photoer extends Api
     protected $noNeedLogin = [];
     protected $noNeedRight = ['*'];
 
+    public function _initialize()
+    {
+        parent::_initialize();
+        $cust = (new Cust)
+            ->where('id', $this->getCustId())
+            ->find();
+
+        if ($cust['is_photoer'] == 'n') {
+            $this->error('当前用户非摄影师');
+        }
+    }
+
     /**
      * 上传作品
      */
     public function createzp($covorimage, $data, $style, $type)
     {
         $model = new Zp();
+
+        $count = (new Zp())
+            ->where('cust', $this->getCustId())
+            ->where('style', $style)
+            ->count();
+
+        if ($count > 30){
+            return $this->error('上传作品超过数量');
+        }
 
         Db::startTrans();
         try {
@@ -65,7 +90,7 @@ class Photoer extends Api
             Db::commit();
         } catch (Exception $e) {
             Db::rollback();
-            $this->error($e->getMessage());
+            throw $e;
         }
 
         $this->success('上传成功, 等待审核');
@@ -140,9 +165,28 @@ class Photoer extends Api
             $zpmodle->where('style', $param['style']);
         }
 
+        $zpmodle->order("usort ASC, createtime DESC");
+
         $list = $zpmodle->select();
 
         $this->success('获取成功', $list);
+    }
+
+    /**
+     * 删除作品
+     */
+    public function deletezp($id) {
+        $zp = (new Zp())
+            ->where('cust', $this->getCustId())
+            ->where('id', $id)
+            ->find();
+
+        if (empty($zp)) {
+            return $this->error('作品不存在');
+        }
+
+        $zp->delete();
+        $this->success('删除成功');
     }
 
     /**
@@ -183,11 +227,216 @@ class Photoer extends Api
             ]);
         } catch(Exception $e) {
             Db::rollback();
-            $this->error($e->getMessage());
+            throw $e;
         }
 
         Db::commit();
         
         return $this->success('提升星级申请成功，等待审核');
+    }
+
+     /**
+     * 订单列表
+     */
+    public function orderlist() {
+        $param = $this->request->param();
+
+        $zpmodel = (new Order());
+
+       
+        // 暂无状态
+        if (empty($param['status'])) {
+            return $this->error('请选择订单状态');
+        }
+
+        $zpmodel->where('status',$param['status']);
+        // 待接订单
+        if ($param['status'] != 1){
+            $zpmodel
+            ->where('photoerid', $this->getCustId());
+
+            // 分页
+            if (!empty($param['page'])) {
+                $zpmodel->limit($this->limitfmt($param['page']));
+            }
+        }
+
+        
+
+        $list = $zpmodel->order('createtime desc')->select();
+
+        foreach ($list as $row) {
+            $row->visible(['id','orderno','uname', 'uphone', 'allow', 'udemand', 'shoottime', 'endtime', 'type', 'ordermoney', 'cbmoney', 'sysmoney', 'status', 'cbimage', 'dgimage', 'wkimage', 'sxmsg']);
+        }
+
+        $list = collection($list)->toArray();
+
+        if ($param['status'] == 1){
+            $resultlist = [];
+            $custStyles = [];
+            $cslist = (new StylesCust())
+                ->where('cust', $this->getCustId())
+                ->select();
+            foreach ($cslist as $cs) {
+                $custStyles[$cs['style']] = $cs['star'];
+            }
+            $hasStyle = (new StylesCust())->where('cust', $this->getCustId())->where('star', '>', 0)->count() > 0;
+            foreach ($list as $row) {
+                if (OrderServer::hasAllow($row['allow'], $custStyles, $hasStyle)){
+                    $task = (new OrderTake())
+                        ->where('order', $row['id'])
+                        ->where('photoer', $this->getCustId())
+                        ->find();
+                    if (!empty($task)) {
+                        if ($task['status'] == 'y'){
+                            $row['status_text'] = '同意';
+                        } else {
+                            continue;
+                        }
+                    }
+                    $resultlist[] = $row;
+                }
+            }
+
+            $list = $resultlist;
+        }
+
+        $this->success('读取订单', $list);
+    }
+
+    public function orderdetail($id) {
+        $order = (new Order())
+            ->where('id', $id)
+            ->field('id,orderno,uname, astar, uphone,shoottime,udemand,endtime, status, sysmoney,type,agent,photoerid,allow,createtime')
+            ->find();
+        if (empty($order)) {
+            return $this->error('订单不存在');
+        }
+
+        // 获得经纪人电话
+        $agent = (new Cust())->where('id', $order['agent'])->find();
+        if (!empty($agent)) {
+            $order['agentphone'] = $agent['phone'];
+        }
+
+        if($order['status'] == 1) {
+            $custStyles = [];
+            $cslist = (new StylesCust())
+                ->where('cust', $this->getCustId())
+                ->select();
+            foreach ($cslist as $cs) {
+                $custStyles[$cs['style']] = $cs['star'];
+            }
+
+            $hasStyle = (new StylesCust())->where('cust', $this->getCustId())->where('star', '>', 0)->count() > 0;
+            if (!OrderServer::hasAllow($order['allow'], $custStyles, $hasStyle)){
+                return $this->error('当前订单无权限接单');
+            }
+        } else{
+            if ($order['photoerid'] != $this->getCustId()) {
+                return $this->error('当前订单非您拥有');
+            }
+        }
+
+        $orderTake = (new OrderTake())
+            ->where('order', $id)
+            ->where('photoer', $this->getCustId())
+            ->find();
+
+        $order['task'] = $orderTake;
+
+        return $this->success('订单显示', $order);
+    }
+
+    /**
+     * 接单
+     */
+    public function taskorder($id, $status) {
+        $ordermodel = (new Order())
+            ->where('id', $id)
+            ->where('status', '1');
+
+
+        $order = $ordermodel->find();
+
+        if (empty($order)) {
+            return $this->error('无此订单');
+        }
+
+        Db::startTrans();
+        try {
+
+            OrderServer::taskorder($id, $this->getCustId(),$status);
+
+        }catch(Exception $e) {
+            Db::rollback();
+            throw $e;
+        }
+        Db::commit();
+        $this->success($status == 'y' ?  '订单接单成功' : '订单拒绝成功');
+    }
+
+    /**
+     * 作品排序
+     */
+    public function prosort($id, $sort) {
+        $thiszp = (new Zp)
+            ->where('cust', $this->getCustId())
+            ->where('id', $id)
+            ->find();
+
+        if (empty($thiszp)){
+            return $this->error('无此作品');
+        }
+
+        $otherzp = (new Zp)
+            ->where('cust', $this->getCustId())
+            ->where('id','<>',$id)
+            ->where('style', $thiszp['style'])
+            ->select();
+
+        if ($sort <= 1) $sort = 1;
+        if ($sort >= count($otherzp) + 1) $sort = count($otherzp) + 1;
+        
+        $c = 0;
+        for($i = 1; $i <= count($otherzp) + 1; $i++) {
+            if ($i == $sort) {
+                $thiszp->save([
+                    'usort' => $i
+                ]);
+            }else {
+                $otherzp[$c]->save([
+                    'usort' => $i
+                ]);
+                $c++;
+            }
+        }
+
+        $this->success('排序成功');
+    }
+
+    public function pfstar($id, $astar = 5) {
+
+        $order = (new Order())
+            ->where('id', $id)
+            ->where('photoerid', $this->getCustId())
+            ->find();
+
+        if (empty($order)){
+            return $this->error('订单不存在');
+        }
+
+        if (!empty($order['astar'])) {
+            return $this->error('已经评星');
+        }
+
+        
+        $order->save([
+            'astar' => $astar
+        ]);
+
+        OrderServer::changeStar($order['agent'], 'agent');
+
+        $this->success('评分成功');
     }
 }

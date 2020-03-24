@@ -6,7 +6,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Table.api.init({
                 extend: {
                     index_url: 'yuyue/index' + location.search,
-                    add_url: 'yuyue/add',
                     edit_url: 'yuyue/edit',
                     del_url: 'yuyue/del',
                     multi_url: 'yuyue/multi',
@@ -23,15 +22,24 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 sortName: 'id',
                 columns: [
                     [
-                        {checkbox: true},
-                        {field: 'id', title: __('Id')},
-                        {field: 'name', title: __('Name')},
-                        {field: 'phone', title: __('Phone')},
-                        {field: 'msg', title: __('Msg')},
+                        {field: 'cust.nickname', title: __('Cust.nickname'), operate: 'like', visible: false},
+                        {
+                            field: 'cust.uname', 
+                            title: __('Cust.uname'), 
+                            operate: 'like',
+                            formatter: function(val, row, index) {
+                                return row['cust']['uname'] || row['cust']['nickname'];
+                            }
+                        },
+                        {field: 'styles.name', title: __('Styles.name'), operate: 'like'},
+
+                        {field: 'id', title: __('Id'), visible: false, operate:false },
+                        {field: 'name', title: __('Name'), operate: 'like'},
+                        {field: 'phone', title: __('Phone'), operate: 'like'},
+                        {field: 'msg', title: __('Msg'), operate: 'like'},
+                        
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', formatter: Table.api.formatter.datetime},
-                        {field: 'cust.nickname', title: __('Cust.nickname')},
-                        {field: 'cust.uname', title: __('Cust.uname')},
-                        {field: 'styles.name', title: __('Styles.name')},
+
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
                 ]
