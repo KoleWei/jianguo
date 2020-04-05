@@ -1,7 +1,7 @@
 <?php
 
 return array (
-  'name' => '坚果摄影',
+  'name' => '兼菓摄影',
   'beian' => '',
   'cdnurl' => '',
   'version' => '1.0.1',
@@ -36,7 +36,7 @@ return array (
   'mail_from' => '10000@qq.com',
   'wx_name' => '兼菓摄影',
   'fontfamily' => '/uploads/20200222/071c5637d1d3d870af3f50de0c72bf24.ttf',
-  'wx_share_bg' => '/uploads/20200317/ef1a4eb13f289de74911879f3c675a2e.jpg',
+  'wx_share_bg' => '/uploads/20200331/ef1a4eb13f289de74911879f3c675a2e.jpg',
   'miniqrwidth' => '220',
   'miniqrtop' => '1150',
   'miniqrleft' => '360',

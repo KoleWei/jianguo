@@ -208,6 +208,7 @@ class Index extends Api
         $result = array("rows" => $list);
         $this->success('读取作品', $result);
     }
+    
 
     /**
      * 获得用户类型
@@ -232,6 +233,73 @@ class Index extends Api
         $this->success('获取成功', $styles);
     }
 
+    /**
+     * 获得类目
+     * @return void
+     */
+    public function prostyles() {
+        $param = $this->request->param();
+        $scmodel = new StylesCust();
+        $scmodel->with(['styles', 'cust'])
+            ->where('styles_cust.ac_zp', '>', 0);
+
+        // 类目
+        if (!empty($param['style'])) {
+            $scmodel->where('styles_cust.style', $param['style']);
+        }
+
+        // 摄影师
+        if (!empty($param['cust'])) {
+            $scmodel->where('styles_cust.cust', $param['cust']);
+        }
+
+        // 搜索
+        if (!empty($param['searchphotoername'])) {
+            // 搜索摄影师
+            $scmodel->where("(cust.uname != '' and cust.uname like '%". $param['searchphotoername'] ."%') or (cust.uname = '' and  cust.nickname like '%". $param['searchphotoername'] ."%')");
+        }
+
+        // 排序
+        if (!empty($param['sort'])) {
+            switch ($param['sort']) {
+                case 'xj':
+                    // 星级
+                    $scmodel->order('styles_cust.star DESC');
+                    break;
+                case 'xjs':
+                    // 星级升序
+                    $scmodel->order('styles_cust.star ASC');
+                    break;
+                case 'rd':
+                    // 浏览量
+                    $scmodel->order('styles_cust.read_num DESC');
+                    break;
+                case 'zh':
+                default:
+                    // 前5个作品管理员置顶，后面按星级排序
+                    $scmodel->order('styles_cust.has_top DESC, styles_cust.star DESC');
+                    break;
+            }
+        }
+
+        // 分页
+        if (!empty($param['curpage'])) {
+            $scmodel->limit($this->limitfmt($param['curpage']));
+        }
+
+        $list = $scmodel->select();
+
+        foreach ($list as $row) {
+            $row->visible(['defimage','star', 'has_top']);
+            $row->visible(['styles']);
+            $row->getRelation('styles')->visible(['id','defimage', 'name', 'showimage', 'type']);
+            $row->visible(['cust']);
+            $row->getRelation('cust')->visible(['id','nickname','uname', 'phone', 'logoimage', 'wximg', 'avatarimage']);
+        }
+        $list = collection($list)->toArray();
+        $result = array("rows" => $list);
+        $this->success('读取作品', $result);
+    }
 
     /**
      * 读取产品
@@ -278,6 +346,7 @@ class Index extends Api
 
         if ($access) {
             (new Zp())->where('id', $id)->setInc('read_num');
+            (new StylesCust())->where('cust', $detail['cust'])->where('style', $detail['style'])->setInc('read_num');
         }
 
         $this->success('读取作品', [
@@ -286,6 +355,8 @@ class Index extends Api
             "access" => $access
         ]);
     }
+
+    
 
     /**
      * 搜索
@@ -328,7 +399,6 @@ class Index extends Api
                 'qrimage' => $qrimg
             ]);
         }
-
         $image = \think\Image::open(ROOT_PATH . 'public' . $config['wx_share_bg']);
 
         $savePath = '/uploads/qr/share';
@@ -375,4 +445,5 @@ class Index extends Api
 
         header("Location: " . $this->request->baseUrl . $dbpath);
     }
+
 }

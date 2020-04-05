@@ -56,7 +56,7 @@ class Agent extends Api
 
         }catch(Exception $e) {
             Db::rollback();
-            throw $e;
+            return $this->error($e->getMessage());
         }
         Db::commit();
         $this->success('订单创建成功');
@@ -86,7 +86,7 @@ class Agent extends Api
 
         }catch(Exception $e) {
             Db::rollback();
-            throw $e;
+            return $this->error($e->getMessage());
         }
         Db::commit();
         $this->success('订单开始拍摄');
@@ -116,7 +116,7 @@ class Agent extends Api
 
         }catch(Exception $e) {
             Db::rollback();
-            throw $e;
+            return $this->error($e->getMessage());
         }
         Db::commit();
         $this->success('订单拍摄结束');
@@ -144,7 +144,7 @@ class Agent extends Api
 
         }catch(Exception $e) {
             Db::rollback();
-            throw $e;
+            return $this->error($e->getMessage());
         }
         Db::commit();
         $this->success('订单取消成功');
@@ -257,7 +257,7 @@ class Agent extends Api
 
         }catch(Exception $e) {
             Db::rollback();
-            throw $e;
+            return $this->error($e->getMessage());
         }
         Db::commit();
         $this->success('订单洽谈中');

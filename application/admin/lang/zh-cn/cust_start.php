@@ -15,7 +15,7 @@ return [
     'Is_teacher'   => '是否老师',
     'Is_teacher y' => '是',
     'Is_teacher n' => '否',
-    'Is_agent'     => '是否代理',
+    'Is_agent'     => '是否经纪人',
     'Is_agent y'   => '是',
     'Is_agent n'   => '否',
     'Is_tg'        => '是否托管',

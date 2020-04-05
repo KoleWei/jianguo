@@ -10,6 +10,7 @@ use app\common\model\Styles;
 use app\common\model\StylesCust;
 use app\common\model\Zp;
 use app\common\server\StarUpServer;
+use app\common\server\StyleServer;
 use app\common\server\ZpServer;
 use Exception;
 use think\Config;
@@ -129,7 +130,7 @@ class Teacher extends Api
             
         }catch(Exception $e) {
             Db::rollback();
-            throw $e;
+            return $this->error($e->getMessage());
         }
 
         Db::commit();
@@ -176,9 +177,10 @@ class Teacher extends Api
             ZpServer::check($id, $status, $this->getCustId(),$msg);
         }catch(Exception $e) {
             Db::rollback();
-            throw $e;
+            return $this->error($e->getMessage());
         }
-
+        // 作品审核
+        StyleServer::updateTotalStyleState();
         Db::commit();
         return $this->success('审核操作成功');
     }

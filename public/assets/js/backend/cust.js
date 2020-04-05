@@ -24,10 +24,10 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {checkbox: true},
                         {field: 'id', title: __('Id'), visible:false},
                         {field: 'logoimage', title: __('Logoimage'), events: Table.api.events.image, formatter: Table.api.formatter.image},
-                        {field: 'openid', title: __('Openid')},
-                        {field: 'nickname', title: __('Nickname')},
-                        {field: 'uname', title: __('Uname')},
-                        {field: 'phone', title: __('Phone')},
+                        {field: 'openid', title: __('Openid'), visible: false, operate:'like'},
+                        {field: 'nickname', title: __('Nickname'), operate:'like'},
+                        {field: 'uname', title: __('Uname'), operate:'like'},
+                        {field: 'phone', title: __('Phone'), operate:'like'},
                         {field: 'is_photoer', title: __('Is_photoer'), searchList: {"y":__('Is_photoer y'),"n":__('Is_photoer n')}, formatter: Table.api.formatter.normal},
                         {field: 'is_teacher', title: __('Is_teacher'), searchList: {"y":__('Is_teacher y'),"n":__('Is_teacher n')}, formatter: Table.api.formatter.normal},
                         {field: 'is_agent', title: __('Is_agent'), searchList: {"y":__('Is_agent y'),"n":__('Is_agent n')}, formatter: Table.api.formatter.normal},
@@ -42,8 +42,16 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 text: __('查看星级'),
                                 title: __('查看星级'),
                                 classname: 'btn btn-xs btn-primary btn-dialog',
-                                icon: 'fa fa-list',
                                 url: 'cust/star',
+                                visible: function (row) {
+                                    return true;
+                                }
+                            },{
+                                name: 'account',
+                                text: __('设置账号'),
+                                title: __('设置账号'),
+                                classname: 'btn btn-xs btn-primary btn-dialog',
+                                url: 'cust/account',
                                 visible: function (row) {
                                     return true;
                                 }
@@ -74,6 +82,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Controller.api.bindevent();
         },
         edit: function () {
+            Controller.api.bindevent();
+        },
+        account: function () {
+            Controller.api.bindevent();
+        },
+        eaccount: function () {
             Controller.api.bindevent();
         },
         api: {

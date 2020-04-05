@@ -5,10 +5,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             // 初始化表格参数配置
             Table.api.init({
                 extend: {
-                    index_url: 'zp/index' + location.search,
-                    edit_url: 'zp/edit',
-                    del_url: 'zp/del',
-                    multi_url: 'zp/multi',
+                    index_url: 'th_zp/index' + location.search,
+                    multi_url: 'th_zp/multi',
                     table: 'zp',
                 }
             });
@@ -22,8 +20,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 sortName: 'id',
                 columns: [
                     [
-                        {field: 'id', title: __('Id'), operate:false},
-                        
                         {field: 'cust.nickname', title: __('摄影师昵称'), operate:'like', visible: false},
                         {
                             field: 'cust.uname', 
@@ -36,13 +32,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
 
                         {field: 'styles.name', title: __('Styles.name'), operate: 'like'},
 
-                       
-
                         {field: 'covorimage', title: __('Covorimage'), operate: false, events: Table.api.events.image, formatter: Table.api.formatter.image},
-
-
-                       
-
 
                         {
                             field: 'data', 
@@ -62,12 +52,35 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
 
 
                         {field: 'type', title: __('Type'), searchList: {"zp":__('Type zp'),"sp":__('Type sp'),"tx":__('Type tx')}, formatter: Table.api.formatter.normal},
-                        {field: 'is_top', title: __('Is_top'), searchList: {"1":__('Is_top 1'),"2":__('Is_top 2')}, formatter: Table.api.formatter.normal},
-                        {field: 'check', title: __('Check'), searchList: {"y":__('Check y'),"n":__('Check n'),"t":__('Check t')}, formatter: Table.api.formatter.normal},
-                        {field: 'read_num', title: __('Read_num'), operate:'RANGE'},
                         {field: 'style', title: __('类型(不要填写)'), visible: false},
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', formatter: Table.api.formatter.datetime},
-                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
+                        {
+                            field: 'operate', 
+                            title: __('Operate'), 
+                            table: table, 
+                            events: Table.api.events.operate, 
+                            formatter: Table.api.formatter.operate,
+                            buttons:[{
+                                name: 'access',
+                                text: __('通过'),
+                                classname: 'btn btn-xs btn-info btn-ajax',
+                                icon: 'fa',
+                                url: 'th_zp/check?status=y',
+                                confirm: '作品是否审核通过',
+                                success: function (data, ret) {
+                                    table.bootstrapTable('refresh');
+                                },
+                            },{
+                                name: 'fail',
+                                text: __('拒绝'),
+                                classname: 'btn btn-xs btn-info btn-dialog',
+                                icon: 'fa',
+                                url: 'th_zp/check?status=n',
+                                success: function (data, ret) {
+                                    table.bootstrapTable('refresh');
+                                },
+                            }]
+                        }
                     ]
                 ]
             });
@@ -78,7 +91,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
         add: function () {
             Controller.api.bindevent();
         },
-        edit: function () {
+        check: function () {
             Controller.api.bindevent();
         },
         api: {

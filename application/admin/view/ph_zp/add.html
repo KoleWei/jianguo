@@ -1,0 +1,63 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Style')}:</label>
+        <div class="col-xs-12 col-sm-8">
+                        
+            <select  id="c-style" data-rule="required" class="form-control selectpicker" name="row[style]">
+                {foreach name="stylesList" item="vo"}
+                    <option data-type="{$vo.type}" value="{$vo.id}" {in name="$vo.id" value="1"}selected{/in}>{$vo.name}</option>
+                {/foreach}
+            </select>
+
+        </div>
+    </div>
+
+    <div id="mov-data" class="form-group data-box" style="display: none;">
+        <label class="control-label col-xs-12 col-sm-2">上传腾讯视频vid:</label>
+        <div class="col-xs-10 col-sm-6">
+            <input id="c-data-tx" data-rule="" class="form-control" placeholder="请输入腾讯vid" name="row[data-tx]" type="text">
+        </div>
+        <div class="control-label col-xs-2 col-sm-2">
+            <a target="_brank;" href="https://jingyan.baidu.com/article/90bc8fc8bfb5bff653640cac.html">获取教程</a>
+        </div>
+    </div>
+
+    <div id="img-data" class="form-group data-box" style="display: none;">
+        <label class="control-label col-xs-12 col-sm-2">上传摄影作品:</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="input-group">
+                <input id="c-data" data-rule="" class="form-control" size="50" name="row[data-zp]" type="text">
+                <div class="input-group-addon no-border no-padding">
+                    <span><button type="button" id="plupload-data" class="btn btn-danger plupload" data-input-id="c-data" data-mimetype="image/gif,image/jpeg,image/png,image/jpg,image/bmp" data-multiple="false" data-preview-id="p-data"><i class="fa fa-upload"></i> {:__('Upload')}</button></span>
+                    <span><button type="button" id="fachoose-data" class="btn btn-primary fachoose" data-input-id="c-data" data-mimetype="image/*" data-multiple="false"><i class="fa fa-list"></i> {:__('Choose')}</button></span>
+                </div>
+                <span class="msg-box n-right" for="c-data"></span>
+            </div>
+            <ul class="row list-inline plupload-preview" id="p-data"></ul>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Covorimage')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="input-group">
+                <input id="c-covorimage" data-rule="required" class="form-control" size="50" name="row[covorimage]" type="text">
+                <div class="input-group-addon no-border no-padding">
+                    <span><button type="button" id="plupload-covorimage" class="btn btn-danger plupload" data-input-id="c-covorimage" data-mimetype="image/gif,image/jpeg,image/png,image/jpg,image/bmp" data-multiple="false" data-preview-id="p-covorimage"><i class="fa fa-upload"></i> {:__('Upload')}</button></span>
+                    <span><button type="button" id="fachoose-covorimage" class="btn btn-primary fachoose" data-input-id="c-covorimage" data-mimetype="image/*" data-multiple="false"><i class="fa fa-list"></i> {:__('Choose')}</button></span>
+                </div>
+                <span class="msg-box n-right" for="c-covorimage"></span>
+            </div>
+            <ul class="row list-inline plupload-preview" id="p-covorimage"></ul>
+        </div>
+    </div>
+    
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-success btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>

@@ -6,6 +6,8 @@ use app\common\controller\Api;
 use app\common\model\Order;
 use app\common\model\OrderTake;
 use app\common\server\OrderServer;
+use app\common\server\StyleServer;
+use think\Db;
 
 /**
  * 首页接口
@@ -23,6 +25,8 @@ class Notify extends Api
         $this->o1();
 
         $this->o2();
+
+        $this->o3();
         
         echo 'ok';
     }
@@ -35,7 +39,7 @@ class Notify extends Api
             ->select();
 
         if (empty($orders) || count($orders) <= 0) {
-            return '订单：' . count($orders);
+            return '评星订单-' . count($orders);
         }
 
 
@@ -43,11 +47,12 @@ class Notify extends Api
             $orders[$i]->save([
                 'astar' => 5
             ]);
+            OrderServer::changeStar($orders[$i]['agent'], 'agent');
         }
 
-        OrderServer::changeStar($orders[$i]['agent'], 'agent');
+       
 
-        echo '评星订单：' . count($orders);
+        echo '评星订单=：' . count($orders);
     }
 
     private function o2() {
@@ -57,7 +62,7 @@ class Notify extends Api
             ->select();
 
         if (empty($orders) || count($orders) <= 0) {
-            return '订单：' . count($orders);
+            return '取消订单-：' . count($orders);
         }
 
 
@@ -74,6 +79,10 @@ class Notify extends Api
 
 
 
-        echo '取消订单：' . count($orders);
+        echo '取消订单=：' . count($orders);
+    }
+
+    public function o3() {
+        StyleServer::updateTotalStyleState();
     }
 }

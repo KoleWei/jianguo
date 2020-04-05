@@ -14,7 +14,7 @@ class Admin extends Validate
         'username' => 'require|regex:\w{3,12}|unique:admin',
         'nickname' => 'require',
         'password' => 'require|regex:\S{32}',
-        'email'    => 'require|email|unique:admin,email',
+        'email'    => 'email',
     ];
 
     /**

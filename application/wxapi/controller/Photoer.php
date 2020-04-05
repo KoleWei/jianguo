@@ -11,6 +11,7 @@ use app\common\model\Styles;
 use app\common\model\StylesCust;
 use app\common\model\Zp;
 use app\common\server\OrderServer;
+use app\common\server\StyleServer;
 use Exception;
 use think\Config;
 use think\Db;
@@ -90,7 +91,7 @@ class Photoer extends Api
             Db::commit();
         } catch (Exception $e) {
             Db::rollback();
-            throw $e;
+            return $this->error($e->getMessage());
         }
 
         $this->success('上传成功, 等待审核');
@@ -186,6 +187,8 @@ class Photoer extends Api
         }
 
         $zp->delete();
+        // 删除重新更新关系
+        StyleServer::updateTotalStyleState();
         $this->success('删除成功');
     }
 
@@ -214,7 +217,7 @@ class Photoer extends Api
                 ->where('step', 1)
                 ->count();
             if ($starlogcount > 0) {
-                return $this->error('该类目星级在审核中!');
+                throw new Exception('该类目星级在审核中!');
             }
 
             (new StarUp())->save([
@@ -227,11 +230,10 @@ class Photoer extends Api
             ]);
         } catch(Exception $e) {
             Db::rollback();
-            throw $e;
+            return $this->error($e->getMessage());
         }
 
         Db::commit();
-        
         return $this->success('提升星级申请成功，等待审核');
     }
 
@@ -317,6 +319,8 @@ class Photoer extends Api
         $agent = (new Cust())->where('id', $order['agent'])->find();
         if (!empty($agent)) {
             $order['agentphone'] = $agent['phone'];
+            $order['agentnickname'] = $agent['nickname'];
+            $order['agentuname'] = $agent['uname'];
         }
 
         if($order['status'] == 1) {
@@ -370,7 +374,7 @@ class Photoer extends Api
 
         }catch(Exception $e) {
             Db::rollback();
-            throw $e;
+            return $this->error($e->getMessage());
         }
         Db::commit();
         $this->success($status == 'y' ?  '订单接单成功' : '订单拒绝成功');

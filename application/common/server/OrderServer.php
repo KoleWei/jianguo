@@ -278,9 +278,9 @@ class OrderServer
         }
 
         // 试拍
-        if (empty($order['cbmoney'])){
-            throw new Exception('请设置拍摄成本');
-        }
+        // if (!is_numeric($order['cbmoney'])){
+        //     throw new Exception('请设置拍摄成本');
+        // }
 
         NotifyServer::notify($order['photoerid'], 'sys', [
             "type" => 2,

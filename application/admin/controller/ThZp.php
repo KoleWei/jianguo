@@ -2,20 +2,23 @@
 
 namespace app\admin\controller;
 
+use app\admin\model\Admin;
 use app\common\controller\Backend;
+use app\common\model\Cust;
 use app\common\model\Styles;
+use app\common\model\Zp;
 use app\common\server\StyleServer;
+use app\common\server\ZpServer;
 use Exception;
 use PDOException;
 use think\Db;
 use think\exception\ValidateException;
 
 /**
- * 作品
- *
+ * 作品审核
  * @icon fa fa-circle-o
  */
-class Zp extends Backend
+class ThZp extends Backend
 {
     
     /**
@@ -34,6 +37,18 @@ class Zp extends Backend
 
         $styles = (new Styles())->select();
         $this->view->assign("stylesList", $styles);
+
+
+        $admin = (new Admin())->where('id', $this->auth->id)->find();
+        if (empty($admin['custid'])) {
+            return $this->error("无权限");
+        }
+
+        $cust = (new Cust())->where('id', $admin['custid'])->find();
+        if ($cust['is_teacher'] != 'y') {
+            return $this->error("无权限");
+        }
+        $this->cust = $cust;
     }
     
     /**
@@ -62,23 +77,26 @@ class Zp extends Backend
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
             $total = $this->model
                     ->with(['cust','styles'])
+                    ->where('zp.check', 't')
                     ->where($where)
                     ->order($sort, $order)
                     ->count();
 
             $list = $this->model
                     ->with(['cust','styles'])
+                    ->where('zp.check', 't')
                     ->where($where)
-                    ->order('is_top asc, createtime desc ')
+                    ->order('zp.createtime desc ')
                     ->limit($offset, $limit)
                     ->select();
 
             foreach ($list as $row) {
-                $row->visible(['id', 'data','covorimage','type','style','is_top','check','read_num','createtime']);
+                $row->visible(['id','type','data', 'createtime', 'covorimage']);
                 $row->visible(['cust']);
 				$row->getRelation('cust')->visible(['nickname','uname']);
 				$row->visible(['styles']);
-				$row->getRelation('styles')->visible(['name']);
+                $row->getRelation('styles')->visible(['name']);
+
             }
             $list = collection($list)->toArray();
             $result = array("total" => $total, "rows" => $list);
@@ -88,9 +106,54 @@ class Zp extends Backend
         return $this->view->fetch();
     }
 
+    /**
+     * 作品审核
+     *
+     * @return void
+     */
+    public function check($ids, $status, $msg = "") {
+
+        $zp = (new Zp())
+            ->where('id', $ids)
+            ->where('check', 't')
+            ->find();
+
+        if (empty($zp)){
+            return $this->error('审核作品不存在');
+        }
+
+        if ($status == 'n'){
+            if ($this->request->isAjax()){
+                if (empty($msg)) {
+                    return $this->error('拒绝理由请填写');
+                }
+            } else {
+                $this->assign("ids", $ids);
+                return $this->view->fetch();
+            }
+        }
+
+        Db::startTrans();
+        try {
+            ZpServer::check($ids, $status, $this->cust['id'], $msg);
+        }catch(Exception $e) {
+            Db::rollback();
+            return $this->error($e->getMessage());
+        }
+        // 作品审核
+        StyleServer::updateTotalStyleState();
+        Db::commit();
+        return $this->success('审核操作成功');
+        
+
+    }
+
 
     /**
-     * 编辑
+     * 查看详情
+     *
+     * @param [type] $ids
+     * @return void
      */
     public function edit($ids = null)
     {

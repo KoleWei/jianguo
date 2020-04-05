@@ -14,6 +14,8 @@
 
 namespace fast;
 
+use app\admin\model\Admin;
+use app\common\model\Cust;
 use think\Db;
 use think\Config;
 use think\Session;
@@ -170,6 +172,13 @@ class Auth
      */
     public function getRuleList($uid)
     {
+
+        $adminn = (new Admin())->where('id', $uid)->find();
+        $cust = null;
+        if (!empty($adminn['custid'])){
+            $cust = (new Cust())->where('id', $adminn['custid'])->find();
+        }
+
         static $_rulelist = []; //保存用户验证通过的权限列表
         if (isset($_rulelist[$uid])) {
             return $_rulelist[$uid];
@@ -193,7 +202,7 @@ class Auth
             $where['id'] = ['in', $ids];
         }
         //读取用户组所有权限规则
-        $this->rules = Db::name($this->config['auth_rule'])->where($where)->field('id,pid,condition,icon,name,title,ismenu')->select();
+        $this->rules = Db::name($this->config['auth_rule'])->where($where)->field('id,pid,condition,icon,name,title,ismenu,notadmin')->select();
 
         //循环规则，判断结果。
         $rulelist = []; //
@@ -208,11 +217,47 @@ class Auth
                 $command = preg_replace('/\{(\w*?)\}/', '$user[\'\\1\']', $rule['condition']);
                 @(eval('$condition=(' . $command . ');'));
                 if ($condition) {
-                    $rulelist[$rule['id']] = strtolower($rule['name']);
+
+                    if ($rule['notadmin'] == "y"){
+                        $rulelist[$rule['id']] = strtolower($rule['name']);
+                    }
+
+                    if ($rule['notadmin'] == "p" && $cust != null && $cust['is_photoer'] == 'y'){
+                        $rulelist[$rule['id']] = strtolower($rule['name']);
+                    }
+
+                    if ($rule['notadmin'] == "t" && $cust != null && $cust['is_teacher'] == 'y'){
+                        $rulelist[$rule['id']] = strtolower($rule['name']);
+                    }
+
+                    if ($rule['notadmin'] == "a" && $cust != null && $cust['is_agent'] == 'y'){
+                        $rulelist[$rule['id']] = strtolower($rule['name']);
+                    }
+
+
                 }
             } else {
-                //只要存在就记录
-                $rulelist[$rule['id']] = strtolower($rule['name']);
+                if (in_array('*', $ids)) {
+                    if ($rule['notadmin'] == "y") {
+                        $rulelist[$rule['id']] = strtolower($rule['name']);
+                    }
+                } else
+                    //只要存在就记录
+                    if ($rule['notadmin'] == "y"){
+                        $rulelist[$rule['id']] = strtolower($rule['name']);
+                    }
+
+                    if ($rule['notadmin'] == "p" && $cust != null && $cust['is_photoer'] == 'y'){
+                        $rulelist[$rule['id']] = strtolower($rule['name']);
+                    }
+
+                    if ($rule['notadmin'] == "t" && $cust != null && $cust['is_teacher'] == 'y'){
+                        $rulelist[$rule['id']] = strtolower($rule['name']);
+                    }
+
+                    if ($rule['notadmin'] == "a" && $cust != null && $cust['is_agent'] == 'y'){
+                        $rulelist[$rule['id']] = strtolower($rule['name']);
+                    }
             }
         }
         $_rulelist[$uid] = $rulelist;
