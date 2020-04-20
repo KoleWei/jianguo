@@ -123,6 +123,18 @@
         </div>
     </div>
     <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('是否核心经纪人')}:</label>
+        <div class="col-xs-12 col-sm-8">
+                        
+            <select  id="c-is_agent_vip" data-rule="required" class="form-control selectpicker" name="row[is_agent_vip]">
+                {foreach name="isVipAgentList" item="vo"}
+                    <option value="{$key}" {in name="key" value="$row.is_agent_vip"}selected{/in}>{$vo}</option>
+                {/foreach}
+            </select>
+
+        </div>
+    </div>
+    <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Is_tg')}:</label>
         <div class="col-xs-12 col-sm-8">
                         

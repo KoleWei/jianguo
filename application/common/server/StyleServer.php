@@ -14,7 +14,7 @@ class StyleServer
 {
 
     public static function updateTotalStyleState() {
-        $sql = "update jg_styles_cust sc set read_num = ( select sum(read_num) from jg_zp zp where zp.style = sc.style and zp.cust = sc.cust ), ac_zp = ( select count(1) from jg_zp zp where zp.style = sc.style and zp.cust = sc.cust and zp.check = 'y' ), has_top = ( select count(1) from jg_zp zp where zp.style = sc.style and zp.cust = sc.cust and zp.is_top = 1 )";
+        $sql = "update jg_styles_cust sc set read_num = ( select sum(read_num) from jg_zp zp where zp.style = sc.style and zp.cust = sc.cust ), ac_zp = ( select count(1) from jg_zp zp where zp.style = sc.style and zp.cust = sc.cust and zp.check = 'y' ), has_top = ( select count(1) from jg_zp zp where zp.style = sc.style and zp.cust = sc.cust and zp.is_top = 1 ),c_time= (select max(createtime) from jg_zp zp where zp.style = sc.style and zp.cust = sc.cust and zp.check = 'y')";
         Db::execute($sql);
     }
 

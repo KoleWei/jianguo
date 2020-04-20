@@ -60,7 +60,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             }
                         },
 
-
+                        {
+                            field: 'teacher.name', title: __('老师'), operate: 'like',
+                            formatter: function(val, row, index){
+                                return row['teacher'] && (row['teacher']['uname'] || row['teacher']['nickname'])
+                            }
+                        },
                         {field: 'type', title: __('Type'), searchList: {"zp":__('Type zp'),"sp":__('Type sp'),"tx":__('Type tx')}, formatter: Table.api.formatter.normal},
                         {field: 'is_top', title: __('Is_top'), searchList: {"1":__('Is_top 1'),"2":__('Is_top 2')}, formatter: Table.api.formatter.normal},
                         {field: 'check', title: __('Check'), searchList: {"y":__('Check y'),"n":__('Check n'),"t":__('Check t')}, formatter: Table.api.formatter.normal},

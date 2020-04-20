@@ -61,13 +61,13 @@ class Zp extends Backend
             }
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
             $total = $this->model
-                    ->with(['cust','styles'])
+                    ->with(['cust','styles', 'teacher'])
                     ->where($where)
                     ->order($sort, $order)
                     ->count();
 
             $list = $this->model
-                    ->with(['cust','styles'])
+                    ->with(['cust','styles', 'teacher'])
                     ->where($where)
                     ->order('is_top asc, createtime desc ')
                     ->limit($offset, $limit)
@@ -76,7 +76,9 @@ class Zp extends Backend
             foreach ($list as $row) {
                 $row->visible(['id', 'data','covorimage','type','style','is_top','check','read_num','createtime']);
                 $row->visible(['cust']);
-				$row->getRelation('cust')->visible(['nickname','uname']);
+                $row->getRelation('cust')->visible(['nickname','uname']);
+                $row->visible(['teacher']);
+				$row->getRelation('teacher')->visible(['nickname','uname']);
 				$row->visible(['styles']);
 				$row->getRelation('styles')->visible(['name']);
             }

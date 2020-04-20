@@ -43,7 +43,7 @@ class Teacher extends Api
     public function starlog() {
         $list = (new StarUp())
             ->with(['styles', 'cust'])
-            ->where('star_up.step', 1)
+            ->where('star_up.step', "1")
             ->where('star_up.needstar', '<', 5)
             ->where('star_up.id', 'not in', function($query){
                 $query->table((new StarUpLog())
@@ -130,7 +130,8 @@ class Teacher extends Api
             
         }catch(Exception $e) {
             Db::rollback();
-            return $this->error($e->getMessage());
+            throw $e;
+            // return $this->error($e->getMessage());
         }
 
         Db::commit();
@@ -156,7 +157,29 @@ class Teacher extends Api
 
         $this->success("作品审核列表", $list);
     }
+    // 删除作品
+    public function deletezp($id) {
+        $zp = (new Zp())
+            ->where('id', $id)
+            ->find();
 
+        if (empty($zp)){
+            return $this->error('作品不存在');
+        }
+
+        Db::startTrans();
+        try {
+            $zp->delete();
+        }catch(Exception $e) {
+            Db::rollback();
+            return $this->error($e->getMessage());
+        }
+        // 作品审核
+        StyleServer::updateTotalStyleState();
+        Db::commit();
+        return $this->success('删除作品成功');
+    }
+    // 审核作品
     public function checkproduct($id, $status = "n",$msg = '') {
 
         $zp = (new Zp())

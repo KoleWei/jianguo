@@ -8,6 +8,7 @@ use app\common\model\Styles;
 use app\common\model\StylesCust;
 use app\common\model\Yuyue;
 use app\common\model\Zp;
+use app\common\server\NotifyServer;
 use app\common\server\OrderServer;
 use app\wxapi\library\Wx;
 use think\Config;
@@ -27,7 +28,7 @@ class Index extends Api
     public function index()
     {
         // 获取首页
-        $styles = (new Styles())->select();
+        $styles = (new Styles())->order('weigh DESC')->select();
 
         $this->success('成功', [
             "styles" =>  $styles
@@ -58,6 +59,14 @@ class Index extends Api
             "phone" => $param['phone'], 
             "msg" => $param['remark'],
             "cust" => $param['cust'],
+        ]);
+
+        // 通知
+        NotifyServer::notify($param['cust'], 'sys', [
+            "type" => 5,
+            "role" => "photoer",
+            "desc" => "预约",
+            "content" => "客户: " . $param['uname'] . "<br/>电话: " . $param['phone'] . "<br/>预约内容: " . $param['remark']
         ]);
 
         $this->success('提交成功');
@@ -100,18 +109,23 @@ class Index extends Api
      * 随机获得电话号码
      * @return void
      */
-    public function randomcall($uid = 0) {
+    public function randomcall($uid = 0, $isu = 0) {
         $phone = null;
         if ($uid > 0) {
             $cust = Cust::get($uid);
             if (!empty($cust) && $cust['is_tg'] == 'y') {
                 $phone = $cust['phone'];
             }
+
+            if ($isu > 0) {
+                $phone = $cust['phone'];
+                return $this->success('获得电话', $phone);
+            }
         }
 
         if (empty($phone)){
             $f = (new Cust());
-            $phonelist = $f->where("phone != ''")->where('is_agent', 'y')->field('phone')->select();
+            $phonelist = $f->where("phone != ''")->where('is_agent_vip', 'y')->where('is_agent', 'y')->field('phone')->select();
             if (!empty($phonelist)){
                 $phone = $phonelist[array_rand($phonelist, 1)]['phone'];
             }
@@ -143,6 +157,8 @@ class Index extends Api
      */
     public function products()
     {
+        $result = array();
+
         $param = $this->request->param();
         $zpmodel = new Zp();
         $zpmodel->with(['styles', 'cust', 'stylescust'])
@@ -157,6 +173,7 @@ class Index extends Api
         // 摄影师
         if (!empty($param['cust'])) {
             $zpmodel->where('zp.cust', $param['cust']);
+            $result["cust"] = (new Cust())->field(['id','nickname','uname', 'phone', 'logoimage', 'wximg', 'avatarimage', 'is_tg'])->find();
         }
 
         // 搜索
@@ -205,7 +222,7 @@ class Index extends Api
             $row->getRelation('stylescust')->visible(['defimage','star']);
         }
         $list = collection($list)->toArray();
-        $result = array("rows" => $list);
+        $result["rows"] = $list;
         $this->success('读取作品', $result);
     }
     
@@ -273,6 +290,10 @@ class Index extends Api
                 case 'rd':
                     // 浏览量
                     $scmodel->order('styles_cust.read_num DESC');
+                    break;
+                case 'zx':
+                    // 最新
+                    $scmodel->order('styles_cust.c_time DESC');
                     break;
                 case 'zh':
                 default:
@@ -394,7 +415,7 @@ class Index extends Api
         $qrimg = $zp['qrimage'];
         // $qrimg = "";
         if (empty($qrimg) || is_file(ROOT_PATH . 'public' . $qrimg)) {
-            $qrimg = Wx::qrcode($id,'pages/product/detail?id=' . $id, $config['miniqrwidth']);
+            $qrimg = Wx::qrcode($id,'pages/product/detail?id=' . $id . '&isu=1', $config['miniqrwidth']);
             $zp->save([
                 'qrimage' => $qrimg
             ]);

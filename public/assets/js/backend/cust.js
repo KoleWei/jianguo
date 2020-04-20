@@ -30,7 +30,22 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'phone', title: __('Phone'), operate:'like'},
                         {field: 'is_photoer', title: __('Is_photoer'), searchList: {"y":__('Is_photoer y'),"n":__('Is_photoer n')}, formatter: Table.api.formatter.normal},
                         {field: 'is_teacher', title: __('Is_teacher'), searchList: {"y":__('Is_teacher y'),"n":__('Is_teacher n')}, formatter: Table.api.formatter.normal},
-                        {field: 'is_agent', title: __('Is_agent'), searchList: {"y":__('Is_agent y'),"n":__('Is_agent n')}, formatter: Table.api.formatter.normal},
+                        {
+                            field: 'is_agent', 
+                            title: __('Is_agent'), 
+                            searchList: {"y":__('Is_agent y'),"n":__('Is_agent n')}, 
+                            formatter: function(val, row, index) {
+                                if (val == 'y') {
+                                    if (row['is_agent_vip'] == 'y'){
+                                        return '<span style="color:red;">核心</span>';
+                                    }else {
+                                        return '<span style="color:green;">普通</span>';
+                                    }
+                                }
+                                return '否';
+                            }
+                        },
+                        {field: 'is_agent_vip', title: __('是否核心经纪人'), searchList: {"y":__('是'),"n":__('否')}, visible: false, formatter: Table.api.formatter.normal},
                         {field: 'is_tg', title: __('Is_tg'), searchList: {"y":__('Is_tg y'),"n":__('Is_tg n')}, formatter: Table.api.formatter.normal},
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', formatter: Table.api.formatter.datetime},
                         {

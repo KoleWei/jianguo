@@ -171,7 +171,12 @@ class Auth extends Api
         $maplist = [];
         $pinyin = (new Pinyin());
         foreach ($list as $row) {
-            $zm = strtoupper($pinyin->abbr(empty($row['uname']) ? $row['nickname'] : $row['uname'])[0]);
+            $pperm = $pinyin->permalink(empty($row['uname']) ? $row['nickname'] : $row['uname'], ".");
+          	if (empty($pperm))
+              $pperm = "#";
+            
+
+            $zm = strtoupper($pperm[0]);
             if (preg_match('/[A-Z]/', $zm)) {
                 if(empty($maplist[$zm])) $maplist[$zm] = [];
                 $maplist[$zm][] = $row;

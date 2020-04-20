@@ -48,6 +48,10 @@ class Cust extends Model
     {
         return ['y' => __('Is_agent y'), 'n' => __('Is_agent n')];
     }
+    public function getIsVipAgentList()
+    {
+        return ['y' => __('核心经纪人'), 'n' => __('普通经纪人')];
+    }
 
     public function getIsTgList()
     {

@@ -80,6 +80,11 @@ class Zp extends Model
         return $this->belongsTo('Cust', 'cust', 'id', [], 'LEFT')->setEagerlyType(0);
     }
 
+    public function teacher()
+    {
+        return $this->belongsTo('Cust', 'teacher', 'id', [], 'LEFT')->setEagerlyType(0);
+    }
+
 
     public function styles()
     {

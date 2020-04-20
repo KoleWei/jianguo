@@ -37,6 +37,7 @@ class Cust extends Backend
         $this->view->assign("isPhotoerList", $this->model->getIsPhotoerList());
         $this->view->assign("isTeacherList", $this->model->getIsTeacherList());
         $this->view->assign("isAgentList", $this->model->getIsAgentList());
+        $this->view->assign("isVipAgentList", $this->model->getIsVipAgentList());
         $this->view->assign("isTgList", $this->model->getIsTgList());
     }
     
@@ -78,7 +79,7 @@ class Cust extends Backend
                     ->select();
 
             foreach ($list as $row) {
-                $row->visible(['id','logoimage','openid','nickname','uname','phone','is_photoer','is_teacher','is_agent','is_tg','createtime']);
+                $row->visible(['id','logoimage','openid','nickname','uname','phone','is_photoer','is_teacher','is_agent','is_agent_vip','is_tg','createtime']);
                 
             }
             $list = collection($list)->toArray();
