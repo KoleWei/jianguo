@@ -40,4 +40,5 @@ return array (
   'miniqrwidth' => '220',
   'miniqrtop' => '1150',
   'miniqrleft' => '360',
+  'fxlxfxr' => '1',
 );

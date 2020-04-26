@@ -70,6 +70,24 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 visible: function (row) {
                                     return true;
                                 }
+                            },{
+                                name: 'ordertotal',
+                                text: __('订单统计'),
+                                title: __('订单统计'),
+                                classname: 'btn btn-xs btn-primary btn-dialog',
+                                url: 'cust/ordertotal',
+                                visible: function (row) {
+                                    return (row['is_agent'] == 'y') || (row['is_photoer'] == 'y');
+                                }
+                            },{
+                                name: 'createzp',
+                                text: __('上传作品'),
+                                title: __('上传作品'),
+                                classname: 'btn btn-xs btn-primary btn-dialog',
+                                url: 'cust/createzp',
+                                visible: function (row) {
+                                    return row['is_photoer'] == 'y';
+                                }
                             }]
                         
                         }
@@ -104,6 +122,27 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
         },
         eaccount: function () {
             Controller.api.bindevent();
+        },
+        ordertotal: function () {
+            Controller.api.bindevent();
+        },
+        createzp: function () {
+            Controller.api.bindevent();
+
+            $('#plupload-data').data('upload-success', function(b,d) {
+                $('#c-covorimage').val(d['data']['thumbnail']);
+                $('#c-covorimage').trigger("change").trigger("validate");
+            })
+
+            
+            function setCurSelect () {
+                var type = $("select option:selected").data("type");
+                $(".data-box").hide();
+                $("#" + type + "-data").show();
+            }
+
+            setCurSelect();
+            $(document).on("change", "#c-style", setCurSelect)
         },
         api: {
             bindevent: function () {

@@ -36,7 +36,7 @@ class Wx
         return $miniProgram->encryptor->decryptData($sessionkey['session_key'], $iv, $encryptData);
     }
 
-    public static function qrcode($key,$path, $width) {
+    public static function qrcode($key,$path, $width, $getNew=false) {
 
         $options = [
             // ...
@@ -59,9 +59,14 @@ class Wx
             mkdir(iconv("UTF-8", "GBK", $downloadpath),0777,true); 
         }
 
-        $dbpath = $savePath . '/'. $key .'.jpg';
-
-        $pathimg =  $downloadpath . '/'. $key .'.jpg';
+        if ($getNew){
+            $dbpath = $savePath . '/'. $key . '_' . time() . '.jpg';
+            $pathimg =  $downloadpath . '/'. $key . '_' . time() .'.jpg';
+        } else {
+            $dbpath = $savePath . '/'. $key .'.jpg';
+            $pathimg =  $downloadpath . '/'. $key .'.jpg';
+        }
+        
         $file = fopen($pathimg, "w");//打开文件准备写入
         fwrite($file,$response);//写入
         fclose($file);//关闭

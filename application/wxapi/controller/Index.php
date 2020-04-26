@@ -109,17 +109,22 @@ class Index extends Api
      * 随机获得电话号码
      * @return void
      */
-    public function randomcall($uid = 0, $isu = 0) {
+    public function randomcall($uid = 0, $qzbduid = 0) {
         $phone = null;
+
+        if ($qzbduid > 0) {
+            $qzbduser = (new Cust())->where('id', $qzbduid)->find();
+            if (empty($qzbduser)) {
+                $this->success('获得电话', "");
+            }else {
+                return $this->success('获得电话', $qzbduser['phone']);
+            }
+        }
+
         if ($uid > 0) {
             $cust = Cust::get($uid);
-            if (!empty($cust) && $cust['is_tg'] == 'y') {
+            if (!empty($cust) && $cust['is_tg'] == 'n') {
                 $phone = $cust['phone'];
-            }
-
-            if ($isu > 0) {
-                $phone = $cust['phone'];
-                return $this->success('获得电话', $phone);
             }
         }
 
@@ -173,7 +178,7 @@ class Index extends Api
         // 摄影师
         if (!empty($param['cust'])) {
             $zpmodel->where('zp.cust', $param['cust']);
-            $result["cust"] = (new Cust())->field(['id','nickname','uname', 'phone', 'logoimage', 'wximg', 'avatarimage', 'is_tg'])->find();
+            $result["cust"] = (new Cust())->where('id', $param['cust'])->field(['id','nickname','uname', 'phone', 'logoimage', 'wximg', 'avatarimage', 'is_tg'])->find();
         }
 
         // 搜索
@@ -247,7 +252,12 @@ class Index extends Api
 
         $styles = $stylesModel->select();
 
-        $this->success('获取成功', $styles);
+        $cust = (new Cust())->where('id', $uid)->field(['id','nickname','uname', 'phone', 'logoimage', 'wximg', 'avatarimage', 'is_tg'])->find();
+
+        $this->success('获取成功', [
+            "cust" => $cust,
+            "styles"=> $styles
+        ]);
     }
 
     /**
@@ -311,7 +321,7 @@ class Index extends Api
         $list = $scmodel->select();
 
         foreach ($list as $row) {
-            $row->visible(['defimage','star', 'has_top']);
+            $row->visible(['defimage','star', 'has_top', 'hotimage']);
             $row->visible(['styles']);
             $row->getRelation('styles')->visible(['id','defimage', 'name', 'showimage', 'type']);
             $row->visible(['cust']);
@@ -360,6 +370,7 @@ class Index extends Api
             $detail->getRelation('styles')->visible(['defimage', 'name', 'showimage', 'type']);
             $detail->visible(['cust']);
             $detail->getRelation('cust')->visible(['nickname','uname', 'phone', 'logoimage', 'wximg', 'avatarimage', 'is_tg', 'id']);
+        
         } else {
             $access = false;
             $accessmsg = '作品不存在';
@@ -409,28 +420,47 @@ class Index extends Api
         }
 
         if (!empty($zp['fximage'])){
-            //header("Location: " . $this->request->baseUrl . $zp['fximage']);
+            // header("Location: " . $this->request->baseUrl . $zp['fximage']);
         }
 
+        $urlp = '';
+        if (!empty($this->request->param('shareid'))) {
+            $urlp .= '&shareid=' . $this->request->param('shareid');
+        }
+
+        // 保存路径
+        $savePath = '/uploads/qr/share';
+        $downloadpath = ROOT_PATH . 'public' . $savePath;
+        $dbpath = $savePath . '/'. $id . $urlp .'.jpg';
+        $pathimg =  $downloadpath . '/'. $id . $urlp .'.jpg';
+
+        if (is_file($pathimg)) {
+            header("Location: " . $this->request->baseUrl . $dbpath);
+        }
+
+
         $qrimg = $zp['qrimage'];
+
+        
+
         // $qrimg = "";
         if (empty($qrimg) || is_file(ROOT_PATH . 'public' . $qrimg)) {
-            $qrimg = Wx::qrcode($id,'pages/product/detail?id=' . $id . '&isu=1', $config['miniqrwidth']);
-            $zp->save([
-                'qrimage' => $qrimg
-            ]);
+
+            
+
+            $qrimg = Wx::qrcode($id,'pages/product/detail?id=' . $id . $urlp , $config['miniqrwidth'], true);
+            // $zp->save([
+            //     'qrimage' => $qrimg
+            // ]);
         }
         $image = \think\Image::open(ROOT_PATH . 'public' . $config['wx_share_bg']);
 
-        $savePath = '/uploads/qr/share';
-        $downloadpath = ROOT_PATH . 'public' . $savePath;
+        
         if (!is_dir($downloadpath)){  
             mkdir(iconv("UTF-8", "GBK", $downloadpath),0777,true); 
         }
 
-        $dbpath = $savePath . '/'. $id .'.jpg';
-
-        $pathimg =  $downloadpath . '/'. $id .'.jpg';
+       
 
 
         $image = $image->water(ROOT_PATH . 'public' . $qrimg,[
@@ -446,8 +476,9 @@ class Index extends Api
             // 剪切图片
 
             if (!empty($covorimage)) {
-
-                $covorimage->thumb(900, 600,\think\Image::THUMB_CENTER)->save($downloadpath . '/t_'. $id .'.jpg');
+                if (!is_file($downloadpath . '/t_'. $id .'.jpg')){
+                    $covorimage->thumb(900, 600,\think\Image::THUMB_CENTER)->save($downloadpath . '/t_'. $id .'.jpg');
+                }
 
                 $image = $image->water($downloadpath . '/t_'. $id .'.jpg',[
                     ($image->width()-900)/2, 300
@@ -460,9 +491,9 @@ class Index extends Api
 
 
 
-        $zp->save([
-            'fximage' => $dbpath,
-        ]);
+        // $zp->save([
+        //     'fximage' => $dbpath,
+        // ]);
 
         header("Location: " . $this->request->baseUrl . $dbpath);
     }

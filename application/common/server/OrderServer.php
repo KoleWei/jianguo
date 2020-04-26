@@ -24,6 +24,7 @@ class OrderServer
         $data['udemand'] = $param['udemand'];
         $data['agent'] = $param['agent'];
         $data['type'] = $param['type'];
+        $data['style'] = $param['style'];
 
         
         if (empty($data['type'])) {
@@ -88,6 +89,14 @@ class OrderServer
             ->where('id', $id);
 
         $order = $ordermodel->find();
+
+        $custuser = (new Cust())
+            ->where('id', $photoer)
+            ->where('is_tg', 'y')
+            ->find();
+        if (empty($custuser)){
+            throw new Exception('无此托管用户');
+        }
 
         if (empty($order)) {
             throw new Exception('无此订单');

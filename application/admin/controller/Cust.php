@@ -12,8 +12,14 @@ use think\Db;
 use app\admin\model\AuthGroup;
 use app\admin\model\AuthGroupAccess;
 use app\common\controller\Backend;
+use app\common\model\Cust as ModelCust;
+use app\common\model\Order;
+use app\common\model\Styles;
+use app\common\model\Zp;
 use fast\Random;
 use fast\Tree;
+use PDOException;
+use think\exception\ValidateException;
 use think\Validate;
 
 /**
@@ -164,6 +170,153 @@ class Cust extends Backend
     
             Db::commit();
             return $this->success('设置成功');
+        }
+
+        return $this->view->fetch();
+    }
+    /**
+     * 创建作品
+     *
+     * @return void
+     */
+    public function createzp($ids){
+        $styles = (new Styles())->select();
+        $this->view->assign("stylesList", $styles);
+
+        if ($this->request->isPost()) {
+            $model = new Zp();
+            $params = $this->request->post("row/a");
+            if ($params) {
+                $params = $this->preExcludeFields($params);
+
+                if ($this->dataLimit && $this->dataLimitFieldAutoFill) {
+                    $params[$this->dataLimitField] = $this->auth->id;
+                }
+                $result = false;
+
+
+                // 作品数量
+                $count = (new Zp())
+                    ->where('cust', $ids)
+                    ->where('style', $params['style'])
+                    ->count();
+
+                if ($count > 30){
+                    return $this->error('上传作品超过数量');
+                }
+
+
+                $styleObj = (new Styles())->where('id', $params['style'])->find();
+
+                if ($styleObj['type'] == 'img') {
+                    $params['data'] = $params['data-zp'];
+                } else {
+                    $params['data'] = $params['data-tx'];
+                }
+
+                if (empty($params['data'])) {
+                    return $this->error('请上传作品');
+                }
+
+                Db::startTrans();
+                try {
+                    $r = $model->save([
+                        "cust" => $ids,
+                        "style" => $params['style'],
+                        "data" => $params['data'],
+                        "covorimage" => $params['covorimage'],
+                        "type" => ($styleObj['type'] == 'img'? 'zp' : 'tx'),
+                        "check" => 'y',
+                    ]);
+                    if (empty($r)) {
+                        throw new Exception('作品上传失败');
+                    }
+        
+                    $sobj = Styles::get($styleObj['id']);
+                    if (empty($sobj)) {
+                        throw new Exception('作品类目不存在');
+                    }
+        
+                    $scount = (new StylesCust())->where('cust', $ids)
+                        ->where('style', $params['style'])
+                        ->count();
+        
+                    if ($scount <= 0) {
+                        $r = (new StylesCust())->save([
+                            "cust" => $ids,
+                            "style" => $params['style'],
+                        ]);
+        
+                        if (empty($r)) {
+                            throw new Exception('作品上传失败');
+                        }
+                    }
+                    Db::commit();
+                } catch (ValidateException $e) {
+                    Db::rollback();
+                    $this->error($e->getMessage());
+                } catch (PDOException $e) {
+                    Db::rollback();
+                    $this->error($e->getMessage());
+                } catch (Exception $e) {
+                    Db::rollback();
+                    $this->error($e->getMessage());
+                }
+                $this->success();
+                
+            }
+            $this->error(__('Parameter %s can not be empty', ''));
+        }
+        return $this->view->fetch();
+    }
+
+    /**
+     * 订单统计
+     *
+     * @return void
+     */
+    public function ordertotal($ids) {
+        $cust = (new ModelCust())->where('id', $ids)->find();
+        if (empty($cust)){
+            return $this->error('用户不存在');
+        }
+        $this->assign("cust", $cust);
+
+        if ($cust['is_agent'] == 'y') {
+
+            // 发布订单数
+            $tfbdd = (new Order())->where('agent', $ids)->count();
+            // 成单数
+            $tcdc = (new Order())->where('agent', $ids)->where('status', '4')->count();
+            // 成单率
+            if ($tfbdd == 0)
+                $tcdl = 0;
+            else
+                $tcdl = round(($tcdc/$tfbdd)*100, 2);
+
+            // 成单总金额
+            $tcdje = (new Order())->where('agent', $ids)->where('status', '4')->sum('ordermoney');
+            // 好评率 
+            $thp = $cust['astar'];
+            $this->assign("tfbdd", $tfbdd);
+            $this->assign("tcdc", $tcdc);
+            $this->assign("tcdl", $tcdl);
+            $this->assign("tcdje", $tcdje);
+            $this->assign("thp", $thp);
+        }
+
+        if ($cust['is_agent'] == 'y') {
+
+            //成单数
+            $pcdc = (new Order())->where('photoerid', $ids)->where('status', '4')->count();
+            //成单总金额
+            $pcdje = (new Order())->where('photoerid', $ids)->where('status', '4')->sum('ordermoney');
+            // 好评率
+            $php = $cust['pstar'];
+            $this->assign("pcdc", $pcdc);
+            $this->assign("pcdje", $pcdje);
+            $this->assign("php", $php);
+
         }
 
         return $this->view->fetch();

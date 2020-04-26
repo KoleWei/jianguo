@@ -16,6 +16,7 @@ use Exception;
 use think\Config;
 use think\Db;
 
+use function fast\e;
 use function PHPSTORM_META\map;
 
 /**
@@ -26,14 +27,16 @@ class Photoer extends Api
     protected $noNeedLogin = [];
     protected $noNeedRight = ['*'];
 
+    protected $custuser = null;
+
     public function _initialize()
     {
         parent::_initialize();
-        $cust = (new Cust)
+        $this->custuser = (new Cust)
             ->where('id', $this->getCustId())
             ->find();
 
-        if ($cust['is_photoer'] == 'n') {
+        if ($this->custuser['is_photoer'] == 'n') {
             $this->error('当前用户非摄影师');
         }
     }
@@ -129,9 +132,8 @@ class Photoer extends Api
             ->find();
 
         $data = [];
-        if (!empty($param['defimage'])) {
-            $data['defimage'] = $param['defimage'];
-        }
+
+        $data['defimage'] = $param['defimage'];
 
         $scust->save($data);
 
@@ -237,13 +239,14 @@ class Photoer extends Api
         return $this->success('提升星级申请成功，等待审核');
     }
 
+
      /**
      * 订单列表
      */
     public function orderlist() {
         $param = $this->request->param();
 
-        $zpmodel = (new Order());
+        $zpmodel = (new Order())->with(['styles']);
 
        
         // 暂无状态
@@ -252,10 +255,10 @@ class Photoer extends Api
         }
 
         $zpmodel->where('status',$param['status']);
-        // 待接订单
+        // 非待接订单
         if ($param['status'] != 1){
             $zpmodel
-            ->where('photoerid', $this->getCustId());
+            ->where('order.photoerid', $this->getCustId());
 
             // 分页
             if (!empty($param['page'])) {
@@ -263,15 +266,26 @@ class Photoer extends Api
             }
         }
 
+        // 待接
+        if ($param['status'] == 1){
+            $zpmodel
+                ->where('order.createtime', '>=', strtotime('-1day'));
+        }
         
 
         $list = $zpmodel->order('createtime desc')->select();
 
         foreach ($list as $row) {
-            $row->visible(['id','orderno','uname', 'uphone', 'allow', 'udemand', 'shoottime', 'endtime', 'type', 'ordermoney', 'cbmoney', 'sysmoney', 'status', 'cbimage', 'dgimage', 'wkimage', 'sxmsg']);
+            $row->visible(['id','orderno','uname', 'agent','uphone', 'allow', 'udemand', 'shoottime', 'endtime', 'type', 'ordermoney', 'cbmoney', 'sysmoney', 'status', 'cbimage', 'dgimage', 'wkimage', 'sxmsg']);
+            $row->visible(['styles']);
+            $row->getRelation('styles')->visible(['id','defimage', 'name', 'showimage', 'type']);
         }
 
         $list = collection($list)->toArray();
+
+        if ($this->custuser['is_tg'] == 'n' && $param['status'] == 1){
+            $list = [];
+        }
 
         if ($param['status'] == 1){
             $resultlist = [];
@@ -292,15 +306,60 @@ class Photoer extends Api
                     if (!empty($task)) {
                         if ($task['status'] == 'y'){
                             $row['status_text'] = '同意';
+                            $row['istake'] = 'y';
                         } else {
                             continue;
                         }
                     }
+
+                    // 经纪人成单数
+                    $row['cdcount'] = (new Order())->where('agent', $row['agent'])->where('status', '4')->count();
+
+                    // 经纪人成单率
+                    $jjrcds = (new Order())->where('agent', $row['agent'])->count();
+                    if ($jjrcds != 0){
+                        $row['cdlount'] = $row['cdcount'] / $jjrcds;
+                    } else {
+                        $row['cdlount'] = 0;
+                    }
+                    
+                    $agent = (new Cust())->where('id', $row['agent'])->find();
+                    if (empty($agent) || !$agent['astar']){
+                        // 按好评率
+                        $row['hpl'] = 0;
+                    } else {
+                        $row['hpl'] = $agent['astar'];
+                    }
+
                     $resultlist[] = $row;
                 }
             }
 
             $list = $resultlist;
+
+
+            $sorttype = $param['sorttype'];
+            $sortval = $param['sortval'];
+
+            // 排序  订单排序：按好评率（升、降）、按成单率（升、降）、按成单数（升、降）、按拍摄费用（升、降）
+            usort($list, function($x, $y) use ($sorttype, $sortval) {
+                $xval = floatval($x[$sorttype]);
+                $yval = floatval($y[$sorttype]);
+
+                $result = 0;
+
+                if ($sortval == 'desc') {
+                    $result = $yval - $xval;
+                } else if ($sortval == 'asc') {
+                    $result = $xval - $yval;
+                } else {
+                    $result = $xval - $yval;
+                }
+
+                // echo $result;
+                return $result;
+            });
+           
         }
 
         $this->success('读取订单', $list);
@@ -309,7 +368,7 @@ class Photoer extends Api
     public function orderdetail($id) {
         $order = (new Order())
             ->where('id', $id)
-            ->field('id,orderno,uname, astar, uphone,shoottime,udemand,endtime, status, sysmoney,type,agent,photoerid,allow,createtime')
+            ->field('id,orderno,uname, astar, uphone,shoottime,style,udemand,endtime, status, sysmoney,type,agent,photoerid,allow,createtime')
             ->find();
         if (empty($order)) {
             return $this->error('订单不存在');
@@ -348,6 +407,8 @@ class Photoer extends Api
             ->find();
 
         $order['task'] = $orderTake;
+
+        $order['styles'] = (new Styles())->where('id', $order['style'])->find();
 
         return $this->success('订单显示', $order);
     }

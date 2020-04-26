@@ -28,7 +28,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {
                             field: 'cust.uname', 
                             title: __('摄影师名称'), 
-                            operate:false,
+                            operate:'like',
                             formatter: function(val, row, index) {
                                 return row['cust']['uname'] || row['cust']['nickname'];
                             }
@@ -61,7 +61,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         },
 
                         {
-                            field: 'teacher.name', title: __('老师'), operate: 'like',
+                            field: 'teacher.uname', title: __('老师'), operate: 'like',
                             formatter: function(val, row, index){
                                 return row['teacher'] && (row['teacher']['uname'] || row['teacher']['nickname'])
                             }

@@ -311,6 +311,10 @@ class Upload extends Api
         $splInfo = $file->validate(['size' => $size])->move(ROOT_PATH . '/public' . $uploadDir, $fileName);
 
         $srcimage = \think\Image::open(ROOT_PATH . '/public' . $uploadDir . '/' . $fileName);
+
+        // 如果图片太大. 等比例缩小
+        $srcimage->thumb(1500, 1000);
+
         $srcimage->water(ROOT_PATH . '/public/assets/wximg/sy.png',\think\Image::WATER_SOUTH)->save(ROOT_PATH . '/public' . $uploadDir . '/' .$fileName);
 
         if ($splInfo) {

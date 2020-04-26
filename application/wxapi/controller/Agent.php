@@ -155,7 +155,7 @@ class Agent extends Api
      */
     public function orderdetail($id) {
         $ordermodel = (new Order())
-            ->with(['photoer'])
+            ->with(['photoer', 'styles'])
             ->where('order.id', $id)
             ->where('order.agent', $this->getCustId());
 
@@ -219,15 +219,22 @@ class Agent extends Api
             ->with('photoer')
             ->where('status', 'y')
             ->where('order_take.order', $id)
+            ->order('photoer.pstar desc')
             ->select();
 
         foreach ($list as $row) {
             $row->visible(['id', 'status', 'order', 'photoer']);
             $row->visible(['photoer']);
-            $row->getRelation('photoer')->visible(['id','nickname','uname', 'phone', 'logoimage', 'wximg', 'avatarimage']);
+            $row->getRelation('photoer')->visible(['id','nickname','uname', 'phone', 'logoimage', 'wximg', 'avatarimage', 'pstar']);
         }
 
         $list = collection($list)->toArray();
+
+        foreach ($list as &$row) {
+            $row['cds'] = (new Order())->where('photoerid', $row['photoer']['id'])->where('status', '4')->count();
+            $row['hpl'] = $row['photoer']['pstar'];
+            $row['cdzje'] = (new Order())->where('photoerid', $row['photoer']['id'])->where('status', '4')->sum('ordermoney');
+        }
         $this->success('读取接单', $list);
     }
 

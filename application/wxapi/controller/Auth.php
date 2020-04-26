@@ -197,6 +197,11 @@ class Auth extends Api
      * @return void
      */
     public function ordercount($role) {
+
+        $custuser = (new Cust())
+            ->where('id', $this->getCustId())
+            ->find();
+
         $reuslt = [
             'dj' => 0,
             'qt' => 0,
@@ -224,36 +229,43 @@ class Auth extends Api
 
         } else if ($role == 'photoer') {
 
-            $list = (new Order())
-                ->where('status', 1)
-                ->select();
-            $resultlist = [];
-            $custStyles = [];
-            $cslist = (new StylesCust())
-                ->where('cust', $this->getCustId())
-                ->select();
-            foreach ($cslist as $cs) {
-                $custStyles[$cs['style']] = $cs['star'];
-            }
-            $hasStyle = (new StylesCust())->where('cust', $this->getCustId())->where('star', '>', 0)->count() > 0;
-            foreach ($list as $row) {
-                if (OrderServer::hasAllow($row['allow'], $custStyles, $hasStyle)){
-                    $task = (new OrderTake())
-                        ->where('order', $row['id'])
-                        ->where('photoer', $this->getCustId())
-                        ->find();
-                    if (!empty($task)) {
-                        if ($task['status'] == 'y'){
-                            $row['status_text'] = '同意';
-                        } else {
-                            continue;
-                        }
-                    }
-                    $resultlist[] = $row;
+            // 待接
+            if($custuser['is_tg'] == 'n'){
+                $reuslt['dj'] = 0;
+            } else {
+                $list = (new Order())
+                    ->where('status', 1)
+                    ->where('createtime', '>=', strtotime("-1day"))
+                    ->select();
+                $resultlist = [];
+                $custStyles = [];
+                $cslist = (new StylesCust())
+                    ->where('cust', $this->getCustId())
+                    ->select();
+                foreach ($cslist as $cs) {
+                    $custStyles[$cs['style']] = $cs['star'];
                 }
-            }
+                $hasStyle = (new StylesCust())->where('cust', $this->getCustId())->where('star', '>', 0)->count() > 0;
+                foreach ($list as $row) {
+                    if (OrderServer::hasAllow($row['allow'], $custStyles, $hasStyle)){
+                        $task = (new OrderTake())
+                            ->where('order', $row['id'])
+                            ->where('photoer', $this->getCustId())
+                            ->find();
+                        if (!empty($task)) {
+                            if ($task['status'] == 'y'){
+                                $row['status_text'] = '同意';
+                            } else {
+                                continue;
+                            }
+                        }
+                        $resultlist[] = $row;
+                    }
+                }
 
-            $reuslt['dj'] = count($resultlist);
+                $reuslt['dj'] = count($resultlist);
+            }
+            
 
             $reuslt['qt'] = (new Order())
                 ->where('photoerid', $this->getCustId())

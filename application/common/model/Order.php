@@ -113,4 +113,9 @@ class Order extends Model
     {
         return $this->belongsTo('Cust', 'photoerid', 'id', [], 'LEFT')->setEagerlyType(0);
     }
+
+    public function styles()
+    {
+        return $this->belongsTo('Styles', 'style', 'id', [], 'LEFT')->setEagerlyType(0);
+    }
 }
