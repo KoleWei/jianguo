@@ -65,3 +65,6 @@ update jg_styles_cust sc set hotimage = (select covorimage from jg_zp zp where s
 -- 设置摄影类目
 ALTER TABLE `jg_order` 
 ADD COLUMN `style` int(10) UNSIGNED NULL COMMENT '摄影类目' AFTER `endedtime`;
+
+-- 插入配置
+INSERT INTO `jg_config`(`name`, `group`, `title`, `tip`, `type`, `value`, `content`, `rule`, `extend`) VALUES ('fxlxfxr', 'wxapp', '分享作品联系分享人', '', 'switch', '', '', 'required', '');

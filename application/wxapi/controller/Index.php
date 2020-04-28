@@ -188,8 +188,9 @@ class Index extends Api
         }
 
         // 排序
-        if (!empty($param['sort'])) {
-            switch ($param['sort']) {
+        /*if (!empty($param['sort'])) {
+            
+            /* switch ($param['sort']) {
                 case 'xj':
                     // 星级
                     $zpmodel->order('stylescust.star DESC');
@@ -208,7 +209,8 @@ class Index extends Api
                     $zpmodel->order('is_top ASC, stylescust.star DESC');
                     break;
             }
-        }
+        }*/
+        $zpmodel->order('zp.usort ASC, zp.createtime DESC');
 
         // 分页
         if (!empty($param['curpage'])) {
