@@ -129,10 +129,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
         createzp: function () {
             Controller.api.bindevent();
 
-            $('#plupload-data').data('upload-success', function(b,d) {
-                $('#c-covorimage').val(d['data']['thumbnail']);
-                $('#c-covorimage').trigger("change").trigger("validate");
-            })
+            // $('#plupload-data').data('upload-success', function(b,d) {
+            //     $('#c-covorimage').val(d['data']['thumbnail']);
+            //     $('#c-covorimage').trigger("change").trigger("validate");
+            // })
+
+            // $('#plupload-data').on('change', function(res) {
+            //     console.log(res);
+            // })
 
             
             function setCurSelect () {

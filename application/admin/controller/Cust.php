@@ -184,7 +184,6 @@ class Cust extends Backend
         $this->view->assign("stylesList", $styles);
 
         if ($this->request->isPost()) {
-            $model = new Zp();
             $params = $this->request->post("row/a");
             if ($params) {
                 $params = $this->preExcludeFields($params);
@@ -201,54 +200,65 @@ class Cust extends Backend
                     ->where('style', $params['style'])
                     ->count();
 
-                if ($count > 30){
-                    return $this->error('上传作品超过数量');
-                }
+                
 
 
                 $styleObj = (new Styles())->where('id', $params['style'])->find();
 
+                $covorimage = [];
                 if ($styleObj['type'] == 'img') {
                     $params['data'] = $params['data-zp'];
+                    $covorimage = array_map(function ($n) {
+                        return substr($n,0,strripos($n, '.')) . '_sm' . substr($n,strripos($n, '.'));
+                    }, explode(',',$params['data']));
                 } else {
                     $params['data'] = $params['data-tx'];
                 }
 
-                if (empty($params['data'])) {
+                $data = explode(',',$params['data']);
+
+                if (empty($params['data']) || count($data) == 0) {
                     return $this->error('请上传作品');
+                }
+
+                if ($count > 30 - count($data)){
+                    return $this->error('上传作品超过数量');
                 }
 
                 Db::startTrans();
                 try {
-                    $r = $model->save([
-                        "cust" => $ids,
-                        "style" => $params['style'],
-                        "data" => $params['data'],
-                        "covorimage" => $params['covorimage'],
-                        "type" => ($styleObj['type'] == 'img'? 'zp' : 'tx'),
-                        "check" => 'y',
-                    ]);
-                    if (empty($r)) {
-                        throw new Exception('作品上传失败');
-                    }
-        
-                    $sobj = Styles::get($styleObj['id']);
-                    if (empty($sobj)) {
-                        throw new Exception('作品类目不存在');
-                    }
-        
-                    $scount = (new StylesCust())->where('cust', $ids)
-                        ->where('style', $params['style'])
-                        ->count();
-        
-                    if ($scount <= 0) {
-                        $r = (new StylesCust())->save([
+                    foreach($data as $k => $d){
+                        $model = new Zp();
+                        $r = $model->save([
                             "cust" => $ids,
                             "style" => $params['style'],
+                            "data" => $d,
+                            "covorimage" => ($styleObj['type'] == 'img'? $covorimage[$k] : $params['covorimage']),
+                            "type" => ($styleObj['type'] == 'img'? 'zp' : 'tx'),
+                            "check" => 'y',
                         ]);
-        
                         if (empty($r)) {
                             throw new Exception('作品上传失败');
+                        }
+            
+                        $sobj = Styles::get($styleObj['id']);
+                        if (empty($sobj)) {
+                            throw new Exception('作品类目不存在');
+                        }
+            
+                        $scount = (new StylesCust())->where('cust', $ids)
+                            ->where('style', $params['style'])
+                            ->count();
+            
+                        if ($scount <= 0) {
+                            $r = (new StylesCust())->save([
+                                "cust" => $ids,
+                                "style" => $params['style'],
+                            ]);
+            
+                            if (empty($r)) {
+                                throw new Exception('作品上传失败');
+                            }
                         }
                     }
                     Db::commit();
