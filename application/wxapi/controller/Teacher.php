@@ -175,7 +175,7 @@ class Teacher extends Api
             return $this->error($e->getMessage());
         }
         // 作品审核
-        StyleServer::updateTotalStyleState();
+        StyleServer::updateTotalStyleStateByUid($zp['cust']);
         Db::commit();
         return $this->success('删除作品成功');
     }
@@ -203,7 +203,7 @@ class Teacher extends Api
             return $this->error($e->getMessage());
         }
         // 作品审核
-        StyleServer::updateTotalStyleState();
+        StyleServer::updateTotalStyleStateByUid($zp['cust']);
         Db::commit();
         return $this->success('审核操作成功');
     }

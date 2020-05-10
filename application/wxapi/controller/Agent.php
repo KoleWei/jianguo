@@ -233,6 +233,12 @@ class Agent extends Api
         foreach ($list as &$row) {
             $row['cds'] = (new Order())->where('photoerid', $row['photoer']['id'])->where('status', '4')->count();
             $row['hpl'] = $row['photoer']['pstar'];
+            $stylecust = (new StylesCust())->where('cust', $row['photoer']['id'])->where('style', $order['style'])->find();
+            if (empty($stylecust)){
+                $row['star'] = 0;
+            } else {
+                $row['star'] = $stylecust['star'];
+            }
             $row['cdzje'] = (new Order())->where('photoerid', $row['photoer']['id'])->where('status', '4')->sum('ordermoney');
         }
         $this->success('读取接单', $list);

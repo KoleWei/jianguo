@@ -77,6 +77,7 @@ class Photoer extends Api
             }
 
             $scount = (new StylesCust())->where('cust', $this->getCustId())
+                ->lock(true)
                 ->where('style', $style)
                 ->count();
 
@@ -190,7 +191,7 @@ class Photoer extends Api
 
         $zp->delete();
         // 删除重新更新关系
-        StyleServer::updateTotalStyleState();
+        StyleServer::updateTotalStyleStateByUid($this->getCustId());
         $this->success('删除成功');
     }
 
@@ -298,41 +299,44 @@ class Photoer extends Api
             }
             $hasStyle = (new StylesCust())->where('cust', $this->getCustId())->where('star', '>', 0)->count() > 0;
             foreach ($list as $row) {
-                if (OrderServer::hasAllow($row['allow'], $custStyles, $hasStyle)){
-                    $task = (new OrderTake())
-                        ->where('order', $row['id'])
-                        ->where('photoer', $this->getCustId())
-                        ->find();
-                    if (!empty($task)) {
-                        if ($task['status'] == 'y'){
-                            $row['status_text'] = '同意';
-                            $row['istake'] = 'y';
-                        } else {
-                            continue;
-                        }
-                    }
-
-                    // 经纪人成单数
-                    $row['cdcount'] = (new Order())->where('agent', $row['agent'])->where('status', '4')->count();
-
-                    // 经纪人成单率
-                    $jjrcds = (new Order())->where('agent', $row['agent'])->count();
-                    if ($jjrcds != 0){
-                        $row['cdlount'] = $row['cdcount'] / $jjrcds;
+                
+                $task = (new OrderTake())
+                    ->where('order', $row['id'])
+                    ->where('photoer', $this->getCustId())
+                    ->find();
+                if (!empty($task)) {
+                    if ($task['status'] == 'y'){
+                        $row['status_text'] = '同意';
+                        $row['istake'] = 'y';
                     } else {
-                        $row['cdlount'] = 0;
+                        continue;
                     }
-                    
-                    $agent = (new Cust())->where('id', $row['agent'])->find();
-                    if (empty($agent) || !$agent['astar']){
-                        // 按好评率
-                        $row['hpl'] = 0;
-                    } else {
-                        $row['hpl'] = $agent['astar'];
-                    }
-
-                    $resultlist[] = $row;
                 }
+
+                // 是否可以接单
+                $row['is_taskable'] = OrderServer::hasAllow($row['allow'], $custStyles, $hasStyle);
+
+                // 经纪人成单数
+                $row['cdcount'] = (new Order())->where('type', 'ps')->where('agent', $row['agent'])->where('status', '4')->count();
+
+                // 经纪人成单率
+                $jjrcds = (new Order())->where('type', 'ps')->where('agent', $row['agent'])->count();
+                if ($jjrcds != 0){
+                    $row['cdlount'] = $row['cdcount'] / $jjrcds;
+                } else {
+                    $row['cdlount'] = 0;
+                }
+
+                $agent = (new Cust())->where('id', $row['agent'])->find();
+                if (empty($agent) || !$agent['astar']){
+                    // 按好评率
+                    $row['hpl'] = 0;
+                } else {
+                    $row['hpl'] = $agent['astar'];
+                }
+
+                $resultlist[] = $row;
+                
             }
 
             $list = $resultlist;
@@ -392,9 +396,10 @@ class Photoer extends Api
             }
 
             $hasStyle = (new StylesCust())->where('cust', $this->getCustId())->where('star', '>', 0)->count() > 0;
-            if (!OrderServer::hasAllow($order['allow'], $custStyles, $hasStyle)){
-                return $this->error('当前订单无权限接单');
-            }
+            // if (!OrderServer::hasAllow($order['allow'], $custStyles, $hasStyle)){
+            //     return $this->error('当前订单无权限接单');
+            // }
+            $order['is_taskable'] = OrderServer::hasAllow($order['allow'], $custStyles, $hasStyle);
         } else{
             if ($order['photoerid'] != $this->getCustId()) {
                 return $this->error('当前订单非您拥有');

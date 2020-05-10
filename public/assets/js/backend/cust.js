@@ -142,7 +142,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             function setCurSelect () {
                 var type = $("select option:selected").data("type");
                 $(".data-box").hide();
-                $("#" + type + "-data").show();
+                $("." + type + "-data").show();
             }
 
             setCurSelect();

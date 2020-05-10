@@ -120,7 +120,7 @@ class OrderServer
 
         $hasStyle = (new StylesCust())->where('cust', $photoer)->where('star', '>', 0)->count() > 0;
         if (!OrderServer::hasAllow($order['allow'], $custStyles, $hasStyle)){
-            throw new Exception('当前订单无权限接单');
+            throw new Exception('未满足接单条件,无法接单!');
         }
 
         (new OrderTake())->save([

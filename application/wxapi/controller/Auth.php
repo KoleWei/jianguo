@@ -247,7 +247,7 @@ class Auth extends Api
                 }
                 $hasStyle = (new StylesCust())->where('cust', $this->getCustId())->where('star', '>', 0)->count() > 0;
                 foreach ($list as $row) {
-                    if (OrderServer::hasAllow($row['allow'], $custStyles, $hasStyle)){
+                    if (true || OrderServer::hasAllow($row['allow'], $custStyles, $hasStyle)){
                         $task = (new OrderTake())
                             ->where('order', $row['id'])
                             ->where('photoer', $this->getCustId())
